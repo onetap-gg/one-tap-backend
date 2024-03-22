@@ -3,7 +3,6 @@ import { challengesDao } from "../Dao/challengesDao"
 export const onGoingChallenges:Controller = async (req,res) =>{
     try{
         try{
-            const userId = req.params.userId
             const gameId = req.params.gameId
             const challenges = await challengesDao.getOngoingChallenges(gameId)
             res.status(200).json(challenges)

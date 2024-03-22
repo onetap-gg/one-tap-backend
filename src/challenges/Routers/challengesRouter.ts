@@ -6,5 +6,5 @@ import { calculateChallengesCompleted } from "../Controllers/calculateChallenges
 export const challengesRouter = Router()
 
 challengesRouter.get("/completed-challenges/:gameId/:userId",completedChallenges)
-challengesRouter.get("/ongoing-challenges/:gameId/:userId",onGoingChallenges)
+challengesRouter.get("/ongoing-challenges/:gameId/",onGoingChallenges)
 challengesRouter.post("/update-completed-challenges",calculateChallengesCompleted)
