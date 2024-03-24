@@ -1,11 +1,10 @@
-export type ChallengesInSameGame = {
+export type ChallengesInSameGame =  {
     id: any;
     Game: {
         gameName: any;
+        id: any;
     }[];
-    Challanges: {
-        requirements: any;
-    }[];
+    requirements: any;
     startTime: any;
     endTime: any;
     type: any;
@@ -16,10 +15,9 @@ export type ChallengesNotInSameGame = {
     id: any;
     Game: {
         gameName: any;
+        id: any;
     }[];
-    Challanges: {
-        requirements: any;
-    }[];
+    requirements: any;
     startTime: any;
     endTime: any;
     type: any;
@@ -31,9 +29,7 @@ export type OnGoingChallenges = {
     Game: {
         gameName: any;
     }[];
-    Challanges: {
-        requirements: any;
-    }[];
+    requirements: any;
     startTime: any;
     endTime: any;
     type: any;
@@ -43,16 +39,8 @@ export type OnGoingChallenges = {
 export type CompletedChallenges = {
     id: any;
     userId: any;
-    game_challenges: {
-        Game: {
-            gameName: any;
-        }[];
-        startTime: any;
-        endTime: any;
-        type: any;
-        name: any;
-        Challanges: {
-            requirements: any;
-        }[];
+    Game: {
+        gameName: any;
     }[];
+    gameId: any;
 }[] | null

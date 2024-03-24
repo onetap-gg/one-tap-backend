@@ -42,7 +42,7 @@ class UserDoa extends Dao implements DaoType{
     }
 
     getIsUserPremium : (userId : string) => Promise<IsPremiumUserType> = async (userId) =>{
-        const {data , error} = await this.dbInstance!.from('user').select(`premiumUser`).eq(`userId` , userId)
+        const {data , error} = await this.dbInstance!.from('User').select(`premiumUser`).eq(`userId` , userId)
         if(error) this.throwError(error)
         return data
     }
