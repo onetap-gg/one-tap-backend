@@ -44,8 +44,6 @@ const resolvePromiseBatchWise = async (promiseArray : Array<Promise<any>> , batc
     return resultArray
 }
 
-
-
 export const calculateChallengesCompleted:Controller = async (req,res) =>{
     try{
         const userId = req.body.userId
@@ -72,18 +70,34 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
             const notSameGameChallenges = resolvedPromises[1]
             const getCompletedChallenges = resolvedPromises[2]
 
-            getCompletedChallenges?.forEach((completedChallenge)=>{
-                const completedChallengeId = completedChallenge.id
-                notSameGameChallenges?.forEach((notSameGame)=>{
-                    if(notSameGame.id=== completedChallengeId){
-                        notCompChallNotSameGame.push(notSameGame)
+            
+            notSameGameChallenges?.forEach((notSameGame)=>{
+                let isPresent = false;
+                getCompletedChallenges?.forEach((completedChallenge)=>{
+                    const completedChallengeId = completedChallenge.id
+                    if(notSameGame.id === completedChallengeId){
+                        isPresent = true
                     }
                 })
-                sameGameChallenges?.forEach((sameGame)=>{
+                if(!isPresent)
+                notCompChallNotSameGame.push(notSameGame)
+            })
+
+            sameGameChallenges?.forEach((sameGame)=>{
+                let isPresent = false;
+                getCompletedChallenges?.forEach((completedChallenge)=>{
+                    const completedChallengeId = completedChallenge.id
                     if(sameGame.id === completedChallengeId){
-                        notCompChallSameGame.push(sameGame)
+                        isPresent = true
                     }
+                    if(!isPresent)
+                    notCompChallSameGame.push(sameGame)
                 })
+            })
+
+            getCompletedChallenges?.forEach((completedChallenge)=>{
+                
+                
             })
         }).catch((err)=>{
             throw new Error(err)
@@ -107,15 +121,14 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
             const promise = challengesDao.updateChallengesCompleted(ch.gameId , ch.challengeId , ch.userId)
             completedChallSameGame.push(promise);
         })
-        
+         
 
         const sameGameChallenge = resolvePromiseBatchWise(completedChallSameGame ,3);
 
+       
 
+        res.status(201).json(sameGameChallenge)
         // not in the same game 
-
-        
-
 
     }catch(err){
         console.log(err)
