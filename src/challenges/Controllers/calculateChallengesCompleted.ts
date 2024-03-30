@@ -4,6 +4,10 @@ import { requirementFactory } from "../../utils/ChallengeRequirement/ChallengeRe
 import { ChallengesInSameGame } from "../Types/types"
 import { ChallengesNotInSameGame } from "../Types/types"
 
+import { VallorentUptoDateData } from "../../utils/ChallengeRequirement/GameClass/vallorentRequirements" 
+import { DotaUptoDateData } from "../../utils/ChallengeRequirement/GameClass/dotaRequirements"
+import { FortniteUptoDate } from "../../utils/ChallengeRequirement/GameClass/fortniteRequirements"
+
 type completedChallenge ={
     gameId :string,
     userId : string,
@@ -121,17 +125,51 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
             const promise = challengesDao.updateChallengesCompleted(ch.gameId , ch.challengeId , ch.userId)
             completedChallSameGame.push(promise);
         })
-         
-
-        const sameGameChallenge = resolvePromiseBatchWise(completedChallSameGame ,3);
+        
+        const sameGameChallenge = await resolvePromiseBatchWise(completedChallSameGame ,3);
 
        
+        await challengeProvider!.updateMatchDetails(gameData, userId)
 
-        res.status(201).json(sameGameChallenge)
-        // not in the same game 
+        const promiseArrayNotSameGame: Array<Promise<any>> = []
+        
 
+        notCompChallNotSameGame.forEach((ch)=>{
+            const promise = challengeProvider!.getDataUptoDate(ch.startTime ,ch.endTime,userId)
+            promiseArrayNotSameGame.push(promise);
+        })
+
+        const matchDetails = await resolvePromiseBatchWise(promiseArrayNotSameGame , 3)
+        
+        const completedNotSameGameChall : Array<string> = [];
+        const progress : Array<any> = []
+        notCompChallNotSameGame.forEach((ntComplete ,i)=>{
+            const requirement = ntComplete.requirements
+            const total = challengeProvider!.calculateTotal(matchDetails[i] , requirement)
+            const totalAny = total as any 
+            const isCompleted = challengeProvider!.checkIfReqMeet(totalAny , requirement)
+            if(isCompleted)
+            completedNotSameGameChall.push(ntComplete.id);
+            else if(isCompleted === false){
+                progress.push(total)
+            }
+        })
+    
+        const notSmGamePromiseArray: Array<Promise<any>> = [] 
+
+        completedNotSameGameChall.forEach((ch)=>{
+            const promise = challengesDao.updateChallengesCompleted(gameId , ch , userId)
+            notSmGamePromiseArray.push(promise);
+        })
+        
+        const ntSameGameChall = await resolvePromiseBatchWise(completedChallSameGame ,3);
+        const completed = [...sameGameChallenge, ...ntSameGameChall]
+
+        res.status(201).json({completed,progress})
+        
     }catch(err){
         console.log(err)
+        res.status(500).json("server error")
     }
 
 }

@@ -58,10 +58,6 @@ class ChallengesDao extends Dao implements DaoType{
         if(error) this.throwError(error);
         return data 
     }
-
-    getValidChallengeInfo : () =>{
-        
-    }
 }
     
 export const challengesDao = new ChallengesDao() 
