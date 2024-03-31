@@ -5,6 +5,7 @@ interface IVallorent {
     updateMatchDetails : (matchData : VallorentUserData ,userId :string) => Promise<VallorentUptoDateDataArray> 
     getDataUptoDate : (start : string , end: string , userId : string) => Promise<VallorentUptoDateDataArray>
     calculateTotal : (matches : VallorentUptoDateDataArray , challenge : VallorentUptoDateData) => VallorentUptoDateData
+    updateTotalCoins : (userId :string , coins  : number) => Promise<any> ;
 }
 
 export type VallorentUptoDateDataArray = {
@@ -156,6 +157,9 @@ class Vallorent extends Dao implements IVallorent{
         });
 
         return total
+    }
+    updateTotalCoins : (userId :string , coins  : number) => Promise<any> = async (userid , coins)=>{
+
     }
 
 }

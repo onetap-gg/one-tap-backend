@@ -1,3 +1,4 @@
+import { number } from "zod";
 import { Dao } from "../../utils/Classes/Dao";
 import { ChallengesInSameGame } from "../Types/types";
 import { ChallengesNotInSameGame } from "../Types/types";
@@ -11,7 +12,7 @@ interface DaoType {
     getOngoingChallenges : (gameId:string) => Promise<OnGoingChallenges>
     getCompletedChallenges : (gameId :string,userId:string) => Promise<CompletedChallenges>
     updateChallengesCompleted : (gameId : string,challengeId :string,userId:string) => Promise<any>
-
+    updateTotalCoins : (userId :string , coins  : number) => Promise<any> ;
 }
 
 class ChallengesDao extends Dao implements DaoType{
@@ -54,9 +55,17 @@ class ChallengesDao extends Dao implements DaoType{
     }
     
     updateChallengesCompleted : (gameId:string,challengeId :string,userId: string) => Promise<any> = async (gameId:string,challengeId :string,userId: string) =>{
-        const {data , error } = await this.dbInstance!.from("completed_challenges").insert([{userId , challengeId,gameId}]).select()
+        const {data , error } = await this.dbInstance!.from("completed_challenges").insert({userId , challengeId,gameId}).select()
         if(error) this.throwError(error);
         return data 
+    }
+    
+    updateTotalCoins : (userId :string , coins  : number) => Promise<any> = async (userId , coins)=>{
+        const {data , error} = await this.dbInstance!.from("User").select("balance").eq("id",userId).single();
+        if(error) this.throwError(error);
+        const totalCoins = data?.balance+coins 
+        const res = await this.dbInstance!.from("User").update({ balance: totalCoins }).eq("id" , userId)
+        if(res.data) this.throwError(res.data)
     }
 }
     

@@ -6,6 +6,7 @@ interface IFortnite {
     updateMatchDetails : (matchData : FortniteUserData ,userId :string) => Promise<FortniteUptoDateArray> 
     getDataUptoDate : (start : Date , end: Date , userId : string) => Promise<any>
     calculateTotal : (matches : FortniteUptoDateArray , challenge: FortniteUptoDate) => FortniteUptoDate
+    updateTotalCoins : (userId :string , coins  : number) => Promise<any> ;
 }
 
 export type FortniteUptoDateArray ={
@@ -118,6 +119,9 @@ class Fortnite extends Dao implements IFortnite{
             }
         })
         return total
+    }
+    updateTotalCoins : (userId :string , coins  : number) => Promise<any> = async (userid , coins)=>{
+
     }
 
 }

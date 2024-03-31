@@ -7,6 +7,7 @@ interface DaoType {
     getCoinsEarned : (userId : string)=> Promise<GetAllCoinEarnedType>
     getCoinsSpend : (userId : string) => Promise <GetAllCoinsSpendType>
     getPurchaseHistory : (userId : string) => Promise <PurchaseHistoryType>
+    addToInventory : (coupon :any,userId:string) => Promise <any> 
 }
 
 class InventoryDao extends Dao implements DaoType{
@@ -35,7 +36,6 @@ class InventoryDao extends Dao implements DaoType{
     }
         
     getPurchaseHistory: (userId: string) => Promise<PurchaseHistoryType> = async (userId) => {
-        if(this.dbInstance === null) this.throwError("DB instance is not present");
         const {data , error} = await this.dbInstance!
         .from(`UserPurchases`)
         .select(`id , createdAt ,amount , Item(itemName ,itemImage , itemType , Game(gameName))`)
@@ -43,5 +43,12 @@ class InventoryDao extends Dao implements DaoType{
         if(error) this.throwError(error)
         return data
     }
+
+    addToInventory : (coupon: any,userId:string) => Promise<any> = async (coupon , userId) =>{
+        const {data , error} = await this.dbInstance!.from("UserPurchase").insert({userId, ...coupon}).select()
+        if(error) this.throwError(error)
+        return data;
+    }
+
 }
 export const inventoryDao = new InventoryDao()

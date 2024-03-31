@@ -5,7 +5,10 @@ export const profileInfoController: Controller =  async (req,res)  =>{
     const userId:string = req.params.userId!.toString()
     try{
         const data = await userDao.getUserProfileData(userId)
-        res.status(200).json(data)
+        const coins : number  = await userDao.getBalance(userId)
+        const x = coins / 100
+        const level = Math.pow(x , 0.8)
+        res.status(200).json({...data , level})
     }catch(err :any){
         console.log(err)
         res.status(500).json("server error")

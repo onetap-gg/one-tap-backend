@@ -4,8 +4,9 @@ import {LeaderBoarGameWiseType} from "../Types/types"
 interface DaoType {
     getAllData : () => Promise<LeaderBoardDataArray>
     getGameSpecificData : (gameId:string) => Promise<LeaderBoarGameWiseType>
-    getLevel : (userId:string) => Promise<any> 
 }
+
+
 
 class LeaderBoardDao extends Dao implements DaoType {
     constructor(){
@@ -18,7 +19,6 @@ class LeaderBoardDao extends Dao implements DaoType {
         .from("UserGame")
         .select(`id, User(userName),gameBalance , gameLevel , Game(gameName)`)
         .order('gameBalance', { ascending: false })
-
         if(error) this.throwError(error)
         return data
     }
@@ -29,16 +29,11 @@ class LeaderBoardDao extends Dao implements DaoType {
         .select(`id, User(userName),gameBalance , gameLevel , Game(gameName)`)
         .eq(`gameId` , gameId)
         .order('gameBalance', { ascending: false })
-
         if(error) this.throwError(error)
         return data
     }
-    getLevel: (userId: string) => Promise<any> = async (userId) =>{
-        const {data,error} = await this.dbInstance!
-        .from("User")
-        .select(`balance`)
-        .eq(`userId` , userId)
-    }
+
+    
 }
 
 export const leaderBoarDao = new LeaderBoardDao ()

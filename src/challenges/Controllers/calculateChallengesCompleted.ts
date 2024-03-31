@@ -4,10 +4,6 @@ import { requirementFactory } from "../../utils/ChallengeRequirement/ChallengeRe
 import { ChallengesInSameGame } from "../Types/types"
 import { ChallengesNotInSameGame } from "../Types/types"
 
-import { VallorentUptoDateData } from "../../utils/ChallengeRequirement/GameClass/vallorentRequirements" 
-import { DotaUptoDateData } from "../../utils/ChallengeRequirement/GameClass/dotaRequirements"
-import { FortniteUptoDate } from "../../utils/ChallengeRequirement/GameClass/fortniteRequirements"
-
 type completedChallenge ={
     gameId :string,
     userId : string,
@@ -127,7 +123,6 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
         })
         
         const sameGameChallenge = await resolvePromiseBatchWise(completedChallSameGame ,3);
-
        
         await challengeProvider!.updateMatchDetails(gameData, userId)
 
@@ -164,6 +159,13 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
         
         const ntSameGameChall = await resolvePromiseBatchWise(completedChallSameGame ,3);
         const completed = [...sameGameChallenge, ...ntSameGameChall]
+
+        let totalCoins  = 0 ;
+        completed.forEach((ch)=>{
+            totalCoins+= ch.rewards
+        })
+
+        await 
 
         res.status(201).json({completed,progress})
         

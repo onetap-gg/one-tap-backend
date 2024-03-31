@@ -18,3 +18,5 @@ export const getGameSpecificData:Controller = async (req,res) =>{
         res.status(500).json("Server Error")
     }    
 }
+
+

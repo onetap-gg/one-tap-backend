@@ -7,7 +7,12 @@ interface DaoType {
     getUserBasicInfo :  (userId : string)=> Promise<UserData>;
     getUserProfileData : (userId : string) => Promise<UserProfileDataArray>;
     getIsUserPremium : (userId : string) => Promise<IsPremiumUserType>
+    getBalance : (userId:string) => Promise<Balance> 
 }
+
+export type Balance = {
+    balance: any;
+}[] | null
 
 class UserDoa extends Dao implements DaoType{
     constructor(){
@@ -45,6 +50,15 @@ class UserDoa extends Dao implements DaoType{
         const {data , error} = await this.dbInstance!.from('User').select(`premiumUser`).eq(`userId` , userId)
         if(error) this.throwError(error)
         return data
+    }
+
+    getBalance: (userId: string) => Promise<any> = async (userId) =>{
+        const {data,error} = await this.dbInstance!
+        .from("User")
+        .select(`balance`)
+        .eq(`userId` , userId)
+        if(error) this.throwError(error)
+        return data;
     }
 }
 
