@@ -6,7 +6,11 @@ interface IFortnite {
     getDataUptoDate : (start : Date , end: Date , userId : string) => Promise<any>
     calculateTotal : (matches : FortniteUptoDateArray , challenge: FortniteUptoDate) => FortniteUptoDate
     uploadChallenges : (data : any) => Promise<void>
+    uploadProgress : (data : UploadProgress) => Promise<any>
+    getProgressData : (userId : string) => Promise<any>
 }
+
+type UploadProgress = Array<{requirements : FortniteUserData , userId :string  , challengeId :string}>
 
 export type FortniteUptoDateArray ={
     id : number
@@ -50,11 +54,6 @@ export type FortniteUserData = {
     shield: number ;
     mode : string
     match_status : boolean,
-}
-
-export type FortniteMatchTotal = {
-    won : FortniteUptoDate
-    loss : FortniteUptoDate
 }
 
 class Fortnite extends Dao implements IFortnite{
@@ -108,14 +107,12 @@ class Fortnite extends Dao implements IFortnite{
         const status = challenge.match_status
         const total : FortniteUptoDate = {match_status:status,match_start : "" , match_end: "", id : 0 , userId :"", kills: 0 , knockout : 0 , revived : 0 , health : 0 , total_shots : 0, shield :  0 ,mode:""}
         matches!.forEach((match)=>{
-            if(status === match.match_status){
                 total.health +=  match.health 
                 total.kills += match.kills
                 total.knockout+= match.knockout
                 total.revived += match.revived
                 total.shield += match.shield
                 total.total_shots += match.total_shots
-            }
         })
         return total
     }
@@ -124,7 +121,16 @@ class Fortnite extends Dao implements IFortnite{
         if(res.error) this.throwError(res.error)
         return 
     }
-
+    async uploadProgress (progress :UploadProgress){
+        const {data ,error} = await this.dbInstance!.from("fortnite_progress").insert(progress).select()
+        if(error) this.throwError(error);
+        return data;
+    }
+    async getProgressData(userId : string ){
+        const {data,error} = await this.dbInstance!.from("fornite_progress").select("*");
+        if(error) this.throwError(error)
+        return data;
+    }
 }
 
 export const fortnite = new Fortnite()

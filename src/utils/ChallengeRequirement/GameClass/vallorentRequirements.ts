@@ -6,7 +6,11 @@ interface IVallorent {
     getDataUptoDate : (start : string , end: string , userId : string) => Promise<VallorentUptoDateDataArray>
     calculateTotal : (matches : VallorentUptoDateDataArray , challenge : VallorentUptoDateData) => VallorentUptoDateData
     uploadChallenges : (data : any) => Promise<void>
+    uploadProgress : (data : UploadProgress) => Promise<any>
+    getProgressData : (userId : string) => Promise<any>
 }
+
+type UploadProgress = Array<{requirements : VallorentUserData , userId :string  , challengeId :string}>
 
 export type VallorentUptoDateDataArray = {
     id: number;
@@ -48,10 +52,6 @@ export type VallorentUptoDateData = {
     userId : string
 }
 
-export type VallorentMatchTotal  = {
-    won : VallorentUptoDateData,
-    loss : VallorentUptoDateData
-}
 
 export type VallorentUserData = {
     match_start: string;
@@ -172,6 +172,17 @@ class Vallorent extends Dao implements IVallorent{
     uploadChallenges: (data: any) => Promise<void> = async (data) =>{
         const res = await this.dbInstance!.from("game_challenges").insert({...data})
         if(res.error) this.throwError(res.error)
+    }
+
+    async uploadProgress (progress :UploadProgress){
+        const {data ,error} = await this.dbInstance!.from("vallorent_progress").insert(progress).select()
+        if(error) this.throwError(error);
+        return data;
+    }
+    async getProgressData(userId : string ){
+        const {data,error} = await this.dbInstance!.from("vallorent_progress").select("*");
+        if(error) this.throwError(error)
+        return data;
     }
 }
 

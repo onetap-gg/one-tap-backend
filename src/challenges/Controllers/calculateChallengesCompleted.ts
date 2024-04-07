@@ -54,6 +54,7 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
         const notSameGameChallengesPromise = challengesDao.getChallengesNotInSameGame(gameId)
         const getCompletedChallengesPromise =  challengesDao.getCompletedChallenges(gameId,userId)
         
+        let totalReward =0;
         
     
 
@@ -72,9 +73,9 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
             const notSameGameChallenges = resolvedPromises[1]
             const getCompletedChallenges = resolvedPromises[2]
 
-            // console.log("samegamechallenges" , sameGameChallenges)
-            // console.log("notsamegameChallenge" , notSameGameChallenges)
-            // console.log("completed challenges",getCompletedChallenges )
+            console.log("samegamechallenges" , sameGameChallenges)
+            console.log("notsamegameChallenge" , notSameGameChallenges)
+            console.log("completed challenges",getCompletedChallenges )
             
             notSameGameChallenges?.forEach((notSameGame)=>{
                 let isPresent = false;
@@ -103,12 +104,14 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
 
         }
         catch(err){
+            console.log(err);
             console.log("Data Not able to fetch")
         }
         
         // console.log( "Not completed Challenges",notCompChallNotSameGame ,notCompChallSameGame )
 
-        
+        const completedChallenges: Array<any> = [];
+        const completedChallengesServer : Array<any> = [];
 
         const challengeProvider = requirementFactory.getRequirement(gameId)
         const completedChallengeSameGame :Array<completedChallenge> = []
@@ -122,22 +125,16 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
            const isComp = challengeProvider?.checkIfReqMeet( gameData,requirements)
             if(isComp){
                 completedChallengeSameGame.push({gameId , userId ,challengeId})
+                totalReward+= challenge.reward
             }
         })
 
         console.log("completed challenges same game" ,completedChallengeSameGame)
 
-        const completedChallSameGame: Array<Promise<any>> = [] 
 
         completedChallengeSameGame.forEach((ch)=>{
-            const promise = challengesDao.updateChallengesCompleted(ch.gameId , ch.challengeId , ch.userId)
-            completedChallSameGame.push(promise);
+            completedChallenges.push({gameId : ch.gameId ,challengeId:  ch.challengeId ,userId: ch.userId})
         })
-
-        const sameGameChallenge = await resolvePromiseBatchWise(completedChallSameGame ,3);
-        // console.log("completed Challenges" ,sameGameChallenge)
-        // console.log("This is the error object", gameData ,userId)
-        console.log("resolved data" ,sameGameChallenge)
 
         await challengeProvider!.updateMatchDetails(gameData, userId)
 
@@ -155,38 +152,60 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
         
         console.log("MATCH details" , matchDetails);
 
-        const completedNotSameGameChall : Array<string> = [];
         const progress : Array<any> = []
+
+        console.log("uncompleted" , notCompChallNotSameGame)
+
         notCompChallNotSameGame.forEach((ntComplete ,i)=>{
             const requirement = ntComplete.requirements
             const total = challengeProvider!.calculateTotal(matchDetails[i] , requirement)
             const totalAny = total as any 
+            console.log("totalAny" , totalAny);
             const isCompleted = challengeProvider!.checkIfReqMeet(totalAny , requirement)
-            if(isCompleted)
-            completedNotSameGameChall.push(ntComplete.id);
-            else if(isCompleted === false){
-                progress.push(total)
+            
+            if(isCompleted){
+                completedChallenges.push({gameId ,challengeId:  ntComplete.id ,userId})
+                totalReward += ntComplete.reward
             }
+        
+            progress.push({requirement : total , challengeId: ntComplete.id})
+    
         })
         
+        console.log("check check" ,  progress ,completedChallenges , totalReward )
+
         const notSmGamePromiseArray: Array<Promise<any>> = [] 
 
-        completedNotSameGameChall.forEach((ch)=>{
-            const promise = challengesDao.updateChallengesCompleted(gameId , ch , userId)
-            notSmGamePromiseArray.push(promise);
-        })
+    
         
-        const ntSameGameChall = await resolvePromiseBatchWise(completedChallSameGame ,3);
-        const completed = [...sameGameChallenge, ...ntSameGameChall]
 
-        let totalCoins  = 0 ;
-        completed.forEach((ch)=>{
-            totalCoins+= ch.rewards
+        const result = await challengesDao.updateChallengesCompleted(completedChallenges)
+        const coins = await challengesDao.updateTotalCoins(userId , totalReward);
+
+        const updateProgressArray : Array<any>= [] ;
+        progress.forEach((pr)=>{
+            updateProgressArray.push({requirement : pr.requirement , userId , challengeId : pr.challengeId})
         })
+
+        const updateProgress = await challengeProvider!.uploadProgress(updateProgressArray)
+        console.log("check 2" , result , coins)
+        //TODO -> send Progress
+        //TODO -> send completed challenges 
+
+        console.log(result , coins , updateProgress)
+
+        // completedNotSameGameChall.forEach((ch)=>{
+        //     const promise = challengesDao.updateChallengesCompleted(gameId , ch , userId)
+        //     notSmGamePromiseArray.push(promise);
+        // })
         
-        await challengesDao.updateTotalCoins(userId,totalCoins);
+        // const ntSameGameChall = await resolvePromiseBatchWise(completedChallSameGame ,3);
+        // const completed = [...sameGameChallenge, ...ntSameGameChall]
+
         
-        res.status(201).json({completed,progress})
+        // await challengesDao.updateTotalCoins(userId,totalCoins);
+        
+        // res.status(201).json({completed,progress})
         
     }catch(err){
         console.log(err)

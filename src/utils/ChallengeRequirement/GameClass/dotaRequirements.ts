@@ -7,7 +7,11 @@ interface IDota {
     getDataUptoDate : (start : Date , end: Date , userId :string) => Promise<DotaUptoDateDataArray>
     calculateTotal : (matches : DotaUptoDateDataArray , challenge : DotaUptoDateData) => DotaUptoDateData
     uploadChallenges : (data : any) => Promise<void>
+    uploadProgress : (data : UploadProgress) => Promise<any>
+    getProgressData : (userId : string) => Promise<any>
 }
+
+type UploadProgress = Array<{requirements : DotaUserData , userId :string  , challengeId :string}>
 
 export type DotaUptoDateDataArray ={
     id: number;
@@ -118,13 +122,11 @@ class Dota extends Dao implements IDota{
 
         matches!.forEach(match => {
         
-            if(match.match_status === status){
                 total.assists += match.assists
                 total.kills += match.kills
                 total.creep_score += match.creep_score
                 total.death += match.death
                 total.physical_damage_dealt_players += match.physical_damage_dealt_players
-            }
         });
         return total
     }
@@ -132,6 +134,17 @@ class Dota extends Dao implements IDota{
     uploadChallenges: (data: any) => Promise<void> = async (data) =>{
         const res = await this.dbInstance!.from("game_challenges").insert({...data})
         if(res.error) this.throwError(res.error)
+    }
+
+    async uploadProgress(progress : UploadProgress){
+        const {data ,error} = await this.dbInstance!.from("dota_progress").insert(progress).select()
+        if(error) this.throwError(error);
+        return data;
+    }
+    async getProgressData(userId : string ){
+        const {data,error} = await this.dbInstance!.from("dota_progress").select("*");
+        if(error) this.throwError(error)
+        return data;
     }
 }
 

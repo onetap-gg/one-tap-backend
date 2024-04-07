@@ -11,4 +11,5 @@ challengesRouter.get("/completed-challenges/:gameId/:userId",completedChallenges
 challengesRouter.get("/ongoing-challenges/:gameId",onGoingChallenges)
 challengesRouter.post("/update-completed-challenges",calculateChallengesCompleted)
 challengesRouter.post("/upload-challenges",uploadChallenges)
+challengesRouter.get("/get-progress/:gameId/:userId")
  
