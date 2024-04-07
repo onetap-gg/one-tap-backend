@@ -1,12 +1,11 @@
 import { Dao } from "../../Classes/Dao";
-import { ChallengeRequirement } from "../ChallengeRequirements";
 
 interface IFortnite {
     checkIfReqMeet : (userAchievement : FortniteUptoDate , goals:FortniteUptoDate) => boolean
     updateMatchDetails : (matchData : FortniteUserData ,userId :string) => Promise<FortniteUptoDateArray> 
     getDataUptoDate : (start : Date , end: Date , userId : string) => Promise<any>
     calculateTotal : (matches : FortniteUptoDateArray , challenge: FortniteUptoDate) => FortniteUptoDate
-    updateTotalCoins : (userId :string , coins  : number) => Promise<any> ;
+    uploadChallenges : (data : any) => Promise<void>
 }
 
 export type FortniteUptoDateArray ={
@@ -120,8 +119,10 @@ class Fortnite extends Dao implements IFortnite{
         })
         return total
     }
-    updateTotalCoins : (userId :string , coins  : number) => Promise<any> = async (userid , coins)=>{
-
+    uploadChallenges: (data: any) => Promise<void> = async (data) =>{
+        const res = await this.dbInstance!.from("game_challenges").insert({...data})
+        if(res.error) this.throwError(res.error)
+        return 
     }
 
 }

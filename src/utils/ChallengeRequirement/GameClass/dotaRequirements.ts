@@ -6,6 +6,7 @@ interface IDota {
     updateMatchDetails : (matchData : DotaUptoDateData ,userId :string) => Promise<DotaUptoDateDataArray> 
     getDataUptoDate : (start : Date , end: Date , userId :string) => Promise<DotaUptoDateDataArray>
     calculateTotal : (matches : DotaUptoDateDataArray , challenge : DotaUptoDateData) => DotaUptoDateData
+    uploadChallenges : (data : any) => Promise<void>
 }
 
 export type DotaUptoDateDataArray ={
@@ -126,6 +127,11 @@ class Dota extends Dao implements IDota{
             }
         });
         return total
+    }
+
+    uploadChallenges: (data: any) => Promise<void> = async (data) =>{
+        const res = await this.dbInstance!.from("game_challenges").insert({...data})
+        if(res.error) this.throwError(res.error)
     }
 }
 

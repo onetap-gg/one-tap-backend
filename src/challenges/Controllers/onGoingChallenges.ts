@@ -12,7 +12,6 @@ export const onGoingChallenges:Controller = async (req,res) =>{
         }
         res.status(200).json()
     }catch(err){
-        
+        res.status(500).json("Server Error")
     }
-
 }

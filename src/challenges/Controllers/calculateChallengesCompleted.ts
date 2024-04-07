@@ -50,26 +50,30 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
         const gameId = req.body.gameId
         const gameData = req.body.gameData
 
-
         const sameGameChallengesPromise = challengesDao.getChallengesInSameGame(gameId)
         const notSameGameChallengesPromise = challengesDao.getChallengesNotInSameGame(gameId)
         const getCompletedChallengesPromise =  challengesDao.getCompletedChallenges(gameId,userId)
+        
+    
 
         const notCompChallSameGame :ChallengesInSameGame = [];
         const notCompChallNotSameGame :ChallengesNotInSameGame = [];
-
-        Promise.all(
+        try{
             
-            [sameGameChallengesPromise , 
-            notSameGameChallengesPromise , 
-            getCompletedChallengesPromise]
-
-            ).then((resolvedPromises)=>{
-                
+            const resolvedPromises = await Promise.all(
+            
+                [sameGameChallengesPromise , 
+                notSameGameChallengesPromise , 
+                getCompletedChallengesPromise]
+    
+                )
             const sameGameChallenges = resolvedPromises[0]
             const notSameGameChallenges = resolvedPromises[1]
             const getCompletedChallenges = resolvedPromises[2]
 
+            // console.log("samegamechallenges" , sameGameChallenges)
+            // console.log("notsamegameChallenge" , notSameGameChallenges)
+            // console.log("conpleted challenges",getCompletedChallenges )
             
             notSameGameChallenges?.forEach((notSameGame)=>{
                 let isPresent = false;
@@ -82,6 +86,7 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
                 if(!isPresent)
                 notCompChallNotSameGame.push(notSameGame)
             })
+            
 
             sameGameChallenges?.forEach((sameGame)=>{
                 let isPresent = false;
@@ -90,23 +95,29 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
                     if(sameGame.id === completedChallengeId){
                         isPresent = true
                     }
-                    if(!isPresent)
-                    notCompChallSameGame.push(sameGame)
                 })
+                if(!isPresent)
+                notCompChallSameGame.push(sameGame)
             })
 
-            getCompletedChallenges?.forEach((completedChallenge)=>{
-                
-                
-            })
-        }).catch((err)=>{
-            throw new Error(err)
-        })
+
+
+        }
+        catch(err){
+            console.log("Data Not able to fetch")
+        }
         
+        // console.log( "Not completed Challenges",notCompChallNotSameGame ,notCompChallSameGame )
+
+        
+
         const challengeProvider = requirementFactory.getRequirement(gameId)
         const completedChallengeSameGame :Array<completedChallenge> = []
 
+        console.log(notCompChallSameGame , "test")
+
         notCompChallSameGame.forEach((challenge)=>{
+            // console.log("inside the foreach")
            const requirements = challenge.requirements
            const challengeId = challenge.id
            const isComp = challengeProvider?.checkIfReqMeet( gameData,requirements)
@@ -115,15 +126,19 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
             }
         })
 
+        console.log("completed challenges same game" ,completedChallengeSameGame)
+
         const completedChallSameGame: Array<Promise<any>> = [] 
 
         completedChallengeSameGame.forEach((ch)=>{
             const promise = challengesDao.updateChallengesCompleted(ch.gameId , ch.challengeId , ch.userId)
             completedChallSameGame.push(promise);
         })
-        
+
         const sameGameChallenge = await resolvePromiseBatchWise(completedChallSameGame ,3);
-       
+        console.log("completed Challenges" ,sameGameChallenge)
+        console.log("This is the error object", gameData ,userId)
+
         await challengeProvider!.updateMatchDetails(gameData, userId)
 
         const promiseArrayNotSameGame: Array<Promise<any>> = []
@@ -149,7 +164,7 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
                 progress.push(total)
             }
         })
-    
+        
         const notSmGamePromiseArray: Array<Promise<any>> = [] 
 
         completedNotSameGameChall.forEach((ch)=>{
@@ -164,9 +179,9 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
         completed.forEach((ch)=>{
             totalCoins+= ch.rewards
         })
-
-        await 
-
+        
+        await challengesDao.updateTotalCoins(userId,totalCoins);
+        
         res.status(201).json({completed,progress})
         
     }catch(err){

@@ -1,11 +1,11 @@
 import { Dao } from "../../Classes/Dao";
 
 interface IVallorent {
-    checkIfReqMeet : (userAchievement : VallorentUptoDateData , goals:VallorentUptoDateData) => boolean
+    checkIfReqMeet : (userAchievement : VallorentUserData , goals:VallorentUptoDateData) => boolean
     updateMatchDetails : (matchData : VallorentUserData ,userId :string) => Promise<VallorentUptoDateDataArray> 
     getDataUptoDate : (start : string , end: string , userId : string) => Promise<VallorentUptoDateDataArray>
     calculateTotal : (matches : VallorentUptoDateDataArray , challenge : VallorentUptoDateData) => VallorentUptoDateData
-    updateTotalCoins : (userId :string , coins  : number) => Promise<any> ;
+    uploadChallenges : (data : any) => Promise<void>
 }
 
 export type VallorentUptoDateDataArray = {
@@ -77,15 +77,15 @@ class Vallorent extends Dao implements IVallorent{
         if(this.dbInstance === null) this.throwError("DB instance is not present");
     }
 
-    checkIfReqMeet(userAchievement : VallorentUptoDateData , goal:VallorentUptoDateData){
+    checkIfReqMeet(userAchievement : VallorentUserData , goal:VallorentUptoDateData){
+        console.log( "userachievenmt" , userAchievement , goal)
+        if(userAchievement === null) this.throwError("Null object")
         let achieved = 0;
         if(userAchievement.assists >= goal.assists){
             achieved ++ 
         }else if(userAchievement.damage_done >= goal.damage_done){
             achieved ++
-        }else if(userAchievement.damage_taken >= goal.damage_taken){
-            achieved ++
-        }else if(userAchievement.damage_taken >= goal.damage_taken){
+        }else if(userAchievement.damage_taken!= null && userAchievement.damage_taken >= goal.damage_taken){
             achieved ++
         }else if(userAchievement.deaths >= goal.deaths){
             achieved ++
@@ -100,10 +100,13 @@ class Vallorent extends Dao implements IVallorent{
         }else if(userAchievement.total_kills >= goal.total_kills){
             achieved ++
         }
-        if(achieved === 10) return true;
+
+        console.log("amount of match property" ,achieved)
+
+        if(achieved === 8) return true;
         return false;
     } 
-
+    
 
     async updateMatchDetails(matchData: VallorentUserData, userId: string){
         const {data , error} = await this.dbInstance!.from("valorent_data").insert({...matchData,userId}).select()
@@ -158,10 +161,11 @@ class Vallorent extends Dao implements IVallorent{
 
         return total
     }
-    updateTotalCoins : (userId :string , coins  : number) => Promise<any> = async (userid , coins)=>{
 
+    uploadChallenges: (data: any) => Promise<void> = async (data) =>{
+        const res = await this.dbInstance!.from("game_challenges").insert({...data})
+        if(res.error) this.throwError(res.error)
     }
-
 }
 
 export const vallorent = new Vallorent()

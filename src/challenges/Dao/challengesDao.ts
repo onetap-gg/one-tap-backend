@@ -23,7 +23,7 @@ class ChallengesDao extends Dao implements DaoType{
 
     getChallengesInSameGame: (gameId:string) => Promise<ChallengesInSameGame> = async (gameId) =>{
         const {data,error} = await this.dbInstance!
-        .from("game_challenges_active_samegame_view")
+        .from("game_challenges_active_insamegame_view")
         .select("id,Game(gameName,id), requirements , startTime ,endTime ,type, name")
         .eq("gameId",gameId)
         if(error) this.throwError(error)
@@ -31,7 +31,7 @@ class ChallengesDao extends Dao implements DaoType{
     }
 
     getChallengesNotInSameGame : (gameId: string) => Promise<ChallengesNotInSameGame> = async (gameId) =>{
-        const {data,error} = await this.dbInstance!.from("game_challenges_active_not_samegame_view")
+        const {data,error} = await this.dbInstance!.from("game_challenges_active_not_insamegame_view")
         .select("id,Game(gameName,id), requirements, startTime ,endTime ,type, name")
         .eq("gameId",gameId)
         if(error) this.throwError(error)

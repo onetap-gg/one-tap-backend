@@ -2,8 +2,10 @@ import { fortnite } from "../GameClass/fortniteRequirements";
 import { vallorent } from "../GameClass/vallorentRequirements";
 import { dota } from "../GameClass/dotaRequirements";
 
-class RequirementFactor{
-    getRequirement(game:string){
+import { GAME_ID } from "../../Constants";
+
+class RequirementFactory{
+    getRequirement(game:number){
         switch(game){
             case GAME_ID.DOTA :{
                 return dota
@@ -18,5 +20,5 @@ class RequirementFactor{
     }
 }
 
-export const requirementFactory = new RequirementFactor()
+export const requirementFactory = new RequirementFactory()
 
