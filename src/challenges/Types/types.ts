@@ -36,9 +36,10 @@ export type OnGoingChallenges = {
     name: any;
 }[] | null
 
-export type CompletedChallenges = {
+export type CompletedChallenges ={
     id: any;
     userId: any;
+    challengeId: any;
     Game: {
         gameName: any;
     }[];

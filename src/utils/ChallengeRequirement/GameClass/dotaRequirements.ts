@@ -2,7 +2,7 @@ import { object } from "zod";
 import { Dao } from "../../Classes/Dao";
 
 interface IDota {
-    checkIfReqMeet : (userAchievement : DotaUptoDateData , goals:DotaUptoDateData) => boolean
+    checkIfReqMeet : (userAchievement : DotaUserData , goals:DotaUptoDateData) => boolean
     updateMatchDetails : (matchData : DotaUptoDateData ,userId :string) => Promise<DotaUptoDateDataArray> 
     getDataUptoDate : (start : Date , end: Date , userId :string) => Promise<DotaUptoDateDataArray>
     calculateTotal : (matches : DotaUptoDateDataArray , challenge : DotaUptoDateData) => DotaUptoDateData
@@ -60,21 +60,21 @@ class Dota extends Dao implements IDota{
         if(this.dbInstance === null) this.throwError("DB instance is not present");
     }
 
-    checkIfReqMeet(userAchievement : DotaUptoDateData , goals:DotaUptoDateData):boolean{
+    checkIfReqMeet(userAchievement : DotaUserData , goals:DotaUptoDateData):boolean{
         let achieved = 0;
         if(userAchievement.assists >=  goals.assists){
             achieved ++;
         }
-        else if(userAchievement.creep_score >= goals.creep_score){
+        if(userAchievement.creep_score >= goals.creep_score){
             achieved ++;
         }
-        else if(userAchievement.death >= goals.death) {
+        if(userAchievement.death >= goals.death) {
             achieved ++;
         }
-        else if(userAchievement.kills >= goals.kills){
+        if(userAchievement.kills >= goals.kills){
             achieved ++;
         }
-        else if(userAchievement.physical_damage_dealt_players >= goals.physical_damage_dealt_players){
+        if(userAchievement.physical_damage_dealt_players >= goals.physical_damage_dealt_players){
             achieved ++;
         }
 

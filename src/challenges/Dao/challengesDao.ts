@@ -48,7 +48,7 @@ class ChallengesDao extends Dao implements DaoType{
 
     getCompletedChallenges : (gameId:string,userId : string) => Promise<CompletedChallenges> = async (gameId,userId) =>{
         const {data,error} = await this.dbInstance!.from("completed_challenges")
-        .select("id ,userId , Game(gameName) , gameId")
+        .select("id ,userId, challengeId, Game(gameName) , gameId")
         .eq("userId",userId).eq("" , gameId)
         if(error) this.throwError(error)
         return data

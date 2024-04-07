@@ -1,7 +1,7 @@
 import { Dao } from "../../Classes/Dao";
 
 interface IFortnite {
-    checkIfReqMeet : (userAchievement : FortniteUptoDate , goals:FortniteUptoDate) => boolean
+    checkIfReqMeet : (userAchievement : FortniteUserData , goals:FortniteUptoDate) => boolean
     updateMatchDetails : (matchData : FortniteUserData ,userId :string) => Promise<FortniteUptoDateArray> 
     getDataUptoDate : (start : Date , end: Date , userId : string) => Promise<any>
     calculateTotal : (matches : FortniteUptoDateArray , challenge: FortniteUptoDate) => FortniteUptoDate
@@ -63,24 +63,24 @@ class Fortnite extends Dao implements IFortnite{
         if(this.dbInstance === null) this.throwError("DB instance is not present");
     }
 
-    checkIfReqMeet(userAchievement : FortniteUptoDate , goals:FortniteUptoDate):boolean{
+    checkIfReqMeet(userAchievement : FortniteUserData , goals:FortniteUptoDate):boolean{
         let achieved =0;
         if(userAchievement.health >= goals.health){
             achieved++
         }
-        else if(userAchievement.knockout >= goals.knockout){
+        if(userAchievement.knockout >= goals.knockout){
             achieved++
         }
-        else if(userAchievement.revived >= goals.revived){
+        if(userAchievement.revived >= goals.revived){
             achieved++
         }
-        else if(userAchievement.kills >= goals.kills){
+        if(userAchievement.kills >= goals.kills){
             achieved++
         }
-        else if(userAchievement.shield >= goals.shield){
+        if(userAchievement.shield >= goals.shield){
             achieved++
         }
-        else if(userAchievement.total_shots >= goals.total_shots){
+        if(userAchievement.total_shots >= goals.total_shots){
             achieved++
         }
 

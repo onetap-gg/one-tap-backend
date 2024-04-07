@@ -78,32 +78,41 @@ class Vallorent extends Dao implements IVallorent{
     }
 
     checkIfReqMeet(userAchievement : VallorentUserData , goal:VallorentUptoDateData){
-        console.log( "userachievenmt" , userAchievement , goal)
+        // console.log( "userachievenmt" , userAchievement , goal)
         if(userAchievement === null) this.throwError("Null object")
         let achieved = 0;
         if(userAchievement.assists >= goal.assists){
             achieved ++ 
-        }else if(userAchievement.damage_done >= goal.damage_done){
+            console.log(1)
+        }if(userAchievement.damage_done >= goal.damage_done){
             achieved ++
-        }else if(userAchievement.damage_taken!= null && userAchievement.damage_taken >= goal.damage_taken){
+            console.log(2)
+        }if(userAchievement.damage_taken!= null && userAchievement.damage_taken >= goal.damage_taken){
             achieved ++
-        }else if(userAchievement.deaths >= goal.deaths){
+            console.log(3)
+        }if(userAchievement.deaths >= goal.deaths){
             achieved ++
-        }else if(userAchievement.headshot >= goal.headshot){
+            console.log(4)
+        }if(userAchievement.headshot >= goal.headshot){
             achieved ++
-        }else if(userAchievement.spikes_defuse >= goal.spikes_defuse){
+            console.log(5)
+        }if(userAchievement.spikes_defuse >= goal.spikes_defuse){
             achieved ++
-        }else if(userAchievement.spikes_planted >= goal.spikes_planted){
+            console.log(6)
+        }if(userAchievement.spikes_planted >= goal.spikes_planted){
             achieved ++
-        }else if(userAchievement.team_scores >= goal.team_scores){
+            console.log(7)
+        }if(userAchievement.team_scores >= goal.team_scores){
             achieved ++
-        }else if(userAchievement.total_kills >= goal.total_kills){
+            console.log(8)
+        }if(userAchievement.total_kills >= goal.total_kills){
             achieved ++
+            console.log(9)
         }
 
-        console.log("amount of match property" ,achieved)
+        // console.log("amount of match property" ,achieved)
 
-        if(achieved === 8) return true;
+        if(achieved === 9) return true;
         return false;
     } 
     
@@ -146,7 +155,6 @@ class Vallorent extends Dao implements IVallorent{
         }
         
         matches!.forEach(match => {
-            if(match.match_status === status){
                 total.assists += match.assists
                 total.damage_done += match.damage_done
                 total.damage_taken += match.damage_taken
@@ -156,7 +164,6 @@ class Vallorent extends Dao implements IVallorent{
                 total.spikes_planted += match.spikes_planted
                 total.team_scores += match.team_scores
                 total.total_kills += match.total_kills
-            }
         });
 
         return total
