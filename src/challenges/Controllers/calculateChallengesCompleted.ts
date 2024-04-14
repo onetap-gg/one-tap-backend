@@ -67,7 +67,6 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
                 [sameGameChallengesPromise , 
                 notSameGameChallengesPromise , 
                 getCompletedChallengesPromise]
-    
                 )
             const sameGameChallenges = resolvedPromises[0]
             const notSameGameChallenges = resolvedPromises[1]
@@ -150,11 +149,11 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
         
         const matchDetails = await resolvePromiseBatchWise(promiseArrayNotSameGame , 3)
         
-        console.log("MATCH details" , matchDetails);
+        // console.log("MATCH details" , matchDetails);
 
         const progress : Array<any> = []
 
-        console.log("uncompleted" , notCompChallNotSameGame)
+        console.log("notsamegamechallenge" , notCompChallNotSameGame)
 
         notCompChallNotSameGame.forEach((ntComplete ,i)=>{
             const requirement = ntComplete.requirements
@@ -178,16 +177,17 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
 
     
         
-
         const result = await challengesDao.updateChallengesCompleted(completedChallenges)
-        const coins = await challengesDao.updateTotalCoins(userId , totalReward);
+        let  coins = 0;
+        
+        if(totalReward >0)
+        coins = await challengesDao.updateTotalCoins(userId , totalReward);
 
         const updateProgressArray : Array<any>= [] ;
         progress.forEach((pr)=>{
             updateProgressArray.push({requirement : pr.requirement , userId , challengeId : pr.challengeId})
         })
 
-        const formattedChallenges : Array<any>= []
         const getCompletedChallengePromiseArray : Array<Promise<any>>= [] 
 
         result.forEach((res : any)=>{
@@ -198,9 +198,14 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
 
         const completedChall = await resolvePromiseBatchWise(getCompletedChallengePromiseArray,3);
 
-        const updateProgress = await challengeProvider!.uploadProgress(updateProgressArray)
+        console.log("progress" ,updateProgressArray ,coins)
         
-        res.status(200).json({updateProgress , balance : coins.balance , challenges : completedChall})
+        let updateProgress = []
+        if(updateProgressArray.length>0){
+            updateProgress = await challengeProvider!.upsertProgress(updateProgressArray)
+        }
+        
+        res.status(200).json({updateProgress , balance : coins , challenges : completedChall})
         
     }catch(err){
         console.log(err)

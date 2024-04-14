@@ -9,9 +9,13 @@ interface IDota {
     uploadChallenges : (data : any) => Promise<void>
     uploadProgress : (data : UploadProgress) => Promise<any>
     getProgressData : (userId : string) => Promise<any>
+    upsertProgress : (progress:UploadProgress) => Promise<any>  
 }
 
-type UploadProgress = Array<{requirements : DotaUserData , userId :string  , challengeId :string}>
+type UploadProgress = Array<{requirement : DotaUserData , userId :string  , challengeId :string}>
+type progress = {requirement : DotaUserData , userId :string  , challengeId :string}
+
+type UpsertProgress = Array<{requirement : DotaUserData , userId :string  , challengeId :string , id : string}>
 
 export type DotaUptoDateDataArray ={
     id: number;
@@ -132,15 +136,84 @@ class Dota extends Dao implements IDota{
     }
 
     uploadChallenges: (data: any) => Promise<void> = async (data) =>{
-        const res = await this.dbInstance!.from("game_challenges").insert({...data})
+        const res = await this.dbInstance!.from("game_challenges").insert([...data])
         if(res.error) this.throwError(res.error)
     }
 
     async uploadProgress(progress : UploadProgress){
-        const {data ,error} = await this.dbInstance!.from("dota_progress").insert(progress).select()
+        const {data ,error} = await this.dbInstance!.from("dota_progress").insert([...progress]).select()
         if(error) this.throwError(error);
         return data;
     }
+    
+    async upsertProgress(progress : UploadProgress){
+        const challengeIdArray : Array<string> = [] ;
+        const progressMp = new Map<string , progress>();
+        progress.forEach((pr)=>{
+            const id = pr.challengeId
+            progressMp.set(id , pr);
+        })
+
+        progress.forEach((pr)=>{
+            const id = pr.challengeId
+            challengeIdArray.push(id.toString());
+        })
+
+
+        let res ,data ,error
+
+        console.log("challengeArray" , challengeIdArray)
+        if(challengeIdArray.length>0){
+            res = await this.dbInstance!!.from("dota_progress").select(" id,challengeId ,userId , requirement").in("challengeId" ,challengeIdArray );
+            data = res.data;
+            error = res.error
+            if(error) this.throwError(error);
+        }
+            
+        
+        
+        const updateArray:UpsertProgress = []
+        const insertArray :UploadProgress = []
+
+        if(data){
+            data.forEach((dt)=>{
+                const id = dt.challengeId;
+                const found = progressMp.get(id);
+                if(found){
+                    updateArray.push({...dt , requirement :found.requirement});
+                    progressMp.delete(id);
+                } 
+            })
+        }
+    
+        progressMp.forEach((val , key)=>{
+            insertArray.push(val);
+        })
+
+        let update , insert 
+        
+        console.log("hey there what a sudden surprise " , challengeIdArray , insertArray ,updateArray)
+
+        if(updateArray.length>0) update = this.dbInstance!!.from("dota_progress").upsert([...updateArray]).select()
+        if(insertArray.length>0) insert = this.dbInstance!!.from("dota_progress").insert([...insertArray]).select()
+        
+        const promiseArray = []
+
+        if(updateArray.length) promiseArray.push(update)
+        if(insertArray.length) promiseArray.push(insert) 
+
+        const resp : any = await Promise.all(promiseArray);
+
+        const updatedProgress :Array<any> = []
+        resp.forEach((res : any)=>{
+            if(res.error) this.throwError(res.error)
+            updatedProgress.push(res.data)
+        })
+
+        return updatedProgress
+    }
+
+
     async getProgressData(userId : string ){
         const {data,error} = await this.dbInstance!.from("dota_progress").select("*");
         if(error) this.throwError(error)
