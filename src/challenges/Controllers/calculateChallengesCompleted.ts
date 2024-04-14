@@ -187,25 +187,20 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
             updateProgressArray.push({requirement : pr.requirement , userId , challengeId : pr.challengeId})
         })
 
+        const formattedChallenges : Array<any>= []
+        const getCompletedChallengePromiseArray : Array<Promise<any>>= [] 
+
+        result.forEach((res : any)=>{
+            const challengeId = res.challengeId;
+            const promise = challengesDao.getCompletedChallengeById(challengeId);
+            getCompletedChallengePromiseArray.push(promise);
+        })
+
+        const completedChall = await resolvePromiseBatchWise(getCompletedChallengePromiseArray,3);
+
         const updateProgress = await challengeProvider!.uploadProgress(updateProgressArray)
-        console.log("check 2" , result , coins)
-        //TODO -> send Progress
-        //TODO -> send completed challenges 
-
-        console.log(result , coins , updateProgress)
-
-        // completedNotSameGameChall.forEach((ch)=>{
-        //     const promise = challengesDao.updateChallengesCompleted(gameId , ch , userId)
-        //     notSmGamePromiseArray.push(promise);
-        // })
         
-        // const ntSameGameChall = await resolvePromiseBatchWise(completedChallSameGame ,3);
-        // const completed = [...sameGameChallenge, ...ntSameGameChall]
-
-        
-        // await challengesDao.updateTotalCoins(userId,totalCoins);
-        
-        // res.status(201).json({completed,progress})
+        res.status(200).json({updateProgress , balance : coins.balance , challenges : completedChall})
         
     }catch(err){
         console.log(err)
