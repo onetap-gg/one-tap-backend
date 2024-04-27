@@ -76,7 +76,7 @@ class ChallengesDao extends Dao implements DaoType{
         const totalCoins = data?.balance+coins 
         const res = await this.dbInstance!.from("User").update({ balance: totalCoins }).eq("id" , userId).select().single()
         if(res.error) this.throwError(res.error)
-        return res.data.balance
+        return res.data.balance         
     }
 }
     

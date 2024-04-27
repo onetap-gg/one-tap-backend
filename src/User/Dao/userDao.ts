@@ -3,8 +3,21 @@ import { UserData } from "../Types/types";
 import { UserProfileDataArray } from "../Types/types";
 import {IsPremiumUserType} from "../Types/types"
 
+interface BasicData {
+    userName : string ,
+    profilePicture : string,
+    userCustomId : string , 
+    profileName : string , 
+    globalRanking : number , 
+    balance : Number , 
+    Auth : string , 
+    level : number ,
+    premiumUser : boolean 
+}
+
 interface DaoType {
     getUserBasicInfo :  (userId : string)=> Promise<UserData>;
+    updateUserBasicInfo : (userData : BasicData, userId:string) => Promise<any>
     getUserProfileData : (userId : string) => Promise<UserProfileDataArray>;
     getIsUserPremium : (userId : string) => Promise<IsPremiumUserType>
     getBalance : (userId:string) => Promise<Balance> 
@@ -57,6 +70,12 @@ class UserDoa extends Dao implements DaoType{
         .from("User")
         .select(`balance`)
         .eq(`userId` , userId)
+        if(error) this.throwError(error)
+        return data;
+    }
+
+    updateUserBasicInfo : (userData : BasicData ,userId : string) =>Promise<any> = async (userData : BasicData ,userId : string)=>{
+        const {data , error} = await this.dbInstance!.from("User").insert(userData).select();
         if(error) this.throwError(error)
         return data;
     }

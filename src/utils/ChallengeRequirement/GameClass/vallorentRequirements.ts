@@ -8,13 +8,14 @@ interface IVallorent {
     uploadChallenges : (data : any) => Promise<void>
     uploadProgress : (data : UploadProgress) => Promise<any>
     getProgressData : (userId : string) => Promise<any>
-    upsertProgress : (progress:UploadProgress) => Promise<any> 
+    upsertProgress : (progress:UpsertData) => Promise<any> 
 }
+type UpsertData = Array<{requirement : VallorentUserData , userId :string  , challengeId :string ,isCompleted:boolean}>
 
-type UploadProgress = Array<{requirement : VallorentUserData , userId :string  , challengeId :string}>
-type progress = {requirement : VallorentUserData , userId :string  , challengeId :string}
+type UploadProgress = Array<{requirement : VallorentUserData , userId :string  , challengeId :string }>
+type progress = {requirement : VallorentUserData , userId :string  , challengeId :string , isCompleted:boolean}
 
-type UpsertProgress = Array<{requirement : VallorentUserData , userId :string  , challengeId :string , id: string}>
+type UpsertProgress = Array<{requirement : VallorentUserData , userId :string  , challengeId :string , id: string ,isCompleted:string}>
 
 export type VallorentUptoDateDataArray = {
     id: number;
@@ -82,7 +83,7 @@ class Vallorent extends Dao implements IVallorent{
     }
 
     checkIfReqMeet(userAchievement : VallorentUserData , goal:VallorentUptoDateData){
-        console.log( "user achievement" , userAchievement , goal)
+        // console.log( "user achievement" , userAchievement , goal)
         if(userAchievement === null) this.throwError("Null object")
         let achieved = 0;
         // console.log("assists" , "user_assists" ,userAchievement.assists , "goal_assists",goal.assists)
@@ -132,12 +133,14 @@ class Vallorent extends Dao implements IVallorent{
     }  
 
     async getDataUptoDate(start: string, end: string , userId :string){
+        console.log("hello" ,start ,end , userId);
         const {data , error} = await this.dbInstance!.from("valorent_data")
         .select(`id , match_start ,match_end ,total_kills , deaths ,assists ,headshot , spikes_planted ,spikes_defuse , damage_done ,team_scores ,   match_status , agent, region ,game_mode ,damage_taken,userId`)
         .gte("match_start" , start)
         .lte("match_end" ,  end)
         .eq("userId" , userId)
         if(error) this.throwError(error)
+        console.log("getDataUptoDate" , data)
         return data
     }
 
@@ -188,23 +191,21 @@ class Vallorent extends Dao implements IVallorent{
         return data;
     }
 
-    async upsertProgress(progress : UploadProgress){
+    async upsertProgress(progress : UpsertData){
         const challengeIdArray : Array<string> = [] ;
         const progressMp = new Map<string , progress>();
+        
+        console.log("progress" , progress);
+
         progress.forEach((pr)=>{
             const id = pr.challengeId
             progressMp.set(id , pr);
-        })
-
-        progress.forEach((pr)=>{
-            const id = pr.challengeId
             challengeIdArray.push(id.toString());
         })
 
-
         let res ,data ,error
 
-        console.log("challengeArray" , challengeIdArray)
+        console.log("challengeArray", progressMp)
         if(challengeIdArray.length>0){
             res = await this.dbInstance!!.from("vallorent_progress").select("id , challengeId ,userId , requirement").in("challengeId" ,challengeIdArray );
             data = res.data;
@@ -212,43 +213,55 @@ class Vallorent extends Dao implements IVallorent{
             if(error) this.throwError(error);
         }
             
-        
-        
-        const updateArray:UpsertProgress = []
+        const updateArray: UploadProgress = []
         const insertArray :UploadProgress = []
+        const deleteArray : Array <string>   = []
 
         if(data){
             data.forEach((dt)=>{
                 const id = dt.challengeId;
                 const found = progressMp.get(id);
+                console.log("found",found);
                 if(found){
-                    updateArray.push({...dt , requirement :found.requirement });
+                    if(found.isCompleted){
+                        deleteArray.push(dt.id)
+                    }else{
+                        updateArray.push({...dt , requirement :found.requirement });
+                    }
                     progressMp.delete(id);
                 } 
             })
         }
-    
+        
         progressMp.forEach((val , key)=>{
-            insertArray.push(val);
+            if(!val.isCompleted){
+                const requirement = val.requirement
+                const challengeId = val.challengeId
+                const userId = val.userId
+                insertArray.push({requirement , challengeId , userId});
+            }
         })
 
-        let update , insert 
+        let update , insert , del ;
         
-        console.log("hey there what a sudden surprise " , challengeIdArray , insertArray ,updateArray)
+        console.log("hey there what a sudden surprise " , challengeIdArray ,deleteArray , insertArray ,updateArray)
 
-        if(updateArray.length>0) update = this.dbInstance!!.from("vallorent_progress").upsert([...updateArray]).select()
-        if(insertArray.length>0) insert = this.dbInstance!!.from("vallorent_progress").insert([...insertArray]).select()
+        if(updateArray.length>0) update = this.dbInstance!.from("vallorent_progress").upsert([...updateArray]).select()
+        if(insertArray.length>0) insert = this.dbInstance!.from("vallorent_progress").insert([...insertArray]).select()
+        if(deleteArray.length >0) del = this.dbInstance!.from("vallorent_progress").delete().in("id" , deleteArray)
         
         const promiseArray = []
 
         if(updateArray.length) promiseArray.push(update)
         if(insertArray.length) promiseArray.push(insert) 
+        if(deleteArray.length) promiseArray.push(del)
 
         const resp : any = await Promise.all(promiseArray);
 
         const updatedProgress :Array<any> = []
-        resp.forEach((res : any)=>{
+        resp.forEach((res : any,i:number)=>{
             if(res.error) this.throwError(res.error)
+            if(i!= 2)
             updatedProgress.push(res.data)
         })
 
