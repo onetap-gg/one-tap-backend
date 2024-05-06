@@ -271,7 +271,7 @@ class Vallorent extends Dao implements IVallorent{
         const updatedProgress :Array<any> = []
         resp.forEach((res : any,i:number)=>{
             if(res.error) this.throwError(res.error)
-            if(i!= 2)
+            if(i!= 2) 
             updatedProgress.push(res.data)
         })
         return updatedProgress
