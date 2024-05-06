@@ -2,7 +2,7 @@ import { object } from "zod";
 import { Dao } from "../../Classes/Dao";
 
 interface IDota {
-    checkIfReqMeet : (userAchievement : DotaUserData , goals:DotaUptoDateData) => boolean
+    checkIfReqMeet : (userAchievement : DotaUserData , goals:DotaUptoDateData) => {isCompleted : boolean , percentage : number}
     updateMatchDetails : (matchData : DotaUptoDateData ,userId :string) => Promise<DotaUptoDateDataArray> 
     getDataUptoDate : (start : Date , end: Date , userId :string) => Promise<DotaUptoDateDataArray>
     calculateTotal : (matches : DotaUptoDateDataArray , challenge : DotaUptoDateData) => DotaUptoDateData
@@ -69,7 +69,7 @@ class Dota extends Dao implements IDota{
         if(this.dbInstance === null) this.throwError("DB instance is not present");
     }
 
-    checkIfReqMeet(userAchievement : DotaUserData , goals:DotaUptoDateData):boolean{
+    checkIfReqMeet(userAchievement : DotaUserData , goals:DotaUptoDateData):{isCompleted : boolean , percentage : number}{
         let achieved = 0;
         if(userAchievement.assists >=  goals.assists){
             achieved ++;
@@ -87,8 +87,15 @@ class Dota extends Dao implements IDota{
             achieved ++;
         }
 
-        if(achieved === 5) return true;
-        return false;
+        let total : number = 0;
+        let player : number = 0;
+
+        total = goals.assists + goals.creep_score + goals.death + goals.kills + goals.physical_damage_dealt_players
+        player = userAchievement.assists + userAchievement.creep_score + userAchievement.death + userAchievement.kills + userAchievement.physical_damage_dealt_players
+        let percentage = (player / total ) * 100 ;
+        let isCompleted = false ; 
+        if(achieved === 5) isCompleted = true;
+        return {isCompleted , percentage}
     } 
 
     async updateMatchDetails(matchData: DotaUserData, userId: string) {

@@ -1,7 +1,8 @@
+import { number } from "zod";
 import { Dao } from "../../Classes/Dao";
 
 interface IFortnite {
-    checkIfReqMeet : (userAchievement : FortniteUserData , goals:FortniteUptoDate) => boolean
+    checkIfReqMeet : (userAchievement : FortniteUserData , goals:FortniteUptoDate) => {isCompleted : boolean , percentage : number}
     updateMatchDetails : (matchData : FortniteUserData ,userId :string) => Promise<FortniteUptoDateArray> 
     getDataUptoDate : (start : Date , end: Date , userId : string) => Promise<any>
     calculateTotal : (matches : FortniteUptoDateArray , challenge: FortniteUptoDate) => FortniteUptoDate
@@ -66,7 +67,7 @@ class Fortnite extends Dao implements IFortnite{
         if(this.dbInstance === null) this.throwError("DB instance is not present");
     }
 
-    checkIfReqMeet(userAchievement : FortniteUserData , goals:FortniteUptoDate):boolean{
+    checkIfReqMeet(userAchievement : FortniteUserData , goals:FortniteUptoDate): {isCompleted : boolean , percentage : number}{
         let achieved =0;
         if(userAchievement.health >= goals.health){
             achieved++
@@ -87,8 +88,17 @@ class Fortnite extends Dao implements IFortnite{
             achieved++
         }
 
-        if(achieved === 6) return true;
-        return false;
+        let total : number  =0;
+        let player : number =0;
+
+        player = userAchievement.health + userAchievement.knockout + userAchievement.revived + userAchievement.kills + userAchievement.shield + userAchievement.total_shots
+
+        total = goals.health + goals.knockout + goals.revived + goals.kills + goals.shield + goals.total_shots
+
+        const percentage = (player / total) * 100; 
+        let isCompleted = false;
+        if(achieved === 6) isCompleted =  true;
+        return {isCompleted , percentage};
     } 
 
     async getDataUptoDate(start: Date, end: Date,userId : string){

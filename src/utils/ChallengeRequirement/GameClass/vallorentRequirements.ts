@@ -1,7 +1,7 @@
 import { Dao } from "../../Classes/Dao";
 
 interface IVallorent {
-    checkIfReqMeet : (userAchievement : VallorentUserData , goals:VallorentUptoDateData) => boolean
+    checkIfReqMeet : (userAchievement : VallorentUserData , goals:VallorentUptoDateData) => {isCompleted : boolean , percentage : number}
     updateMatchDetails : (matchData : VallorentUserData ,userId :string) => Promise<VallorentUptoDateDataArray> 
     getDataUptoDate : (start : string , end: string , userId : string) => Promise<VallorentUptoDateDataArray>
     calculateTotal : (matches : VallorentUptoDateDataArray , challenge : VallorentUptoDateData) => VallorentUptoDateData
@@ -9,6 +9,7 @@ interface IVallorent {
     uploadProgress : (data : UploadProgress) => Promise<any>
     getProgressData : (userId : string) => Promise<any>
     upsertProgress : (progress:UpsertData) => Promise<any> 
+
 }
 type UpsertData = Array<{requirement : VallorentUserData , userId :string  , challengeId :string ,isCompleted:boolean}>
 
@@ -82,6 +83,8 @@ class Vallorent extends Dao implements IVallorent{
         if(this.dbInstance === null) this.throwError("DB instance is not present");
     }
 
+
+
     checkIfReqMeet(userAchievement : VallorentUserData , goal:VallorentUptoDateData){
         // console.log( "user achievement" , userAchievement , goal)
         if(userAchievement === null) this.throwError("Null object")
@@ -118,11 +121,18 @@ class Vallorent extends Dao implements IVallorent{
             achieved ++
             console.log(9)
         }
-
+        let total : number  =0;
+        let player : number =0; 
         // console.log("amount of match property" ,achieved)
+        total = goal.assists + goal.damage_done + goal.damage_taken + goal.deaths + goal.headshot + goal.spikes_defuse + goal.spikes_planted + goal.team_scores + goal.total_kills; 
+        if(userAchievement.damage_taken)
+        player = userAchievement.assists + userAchievement.damage_done + userAchievement.damage_taken + userAchievement.deaths + userAchievement.headshot + userAchievement.spikes_defuse + userAchievement.spikes_planted + userAchievement.team_scores + userAchievement.total_kills; 
+        
+        let percentage : number = (player / total ) * 100;
 
-        if(achieved === 9) return true;
-        return false;
+        let isCompleted = false;
+        if(achieved === 9) isCompleted =  true;
+        return {isCompleted , percentage};
     } 
     
 
@@ -264,7 +274,6 @@ class Vallorent extends Dao implements IVallorent{
             if(i!= 2)
             updatedProgress.push(res.data)
         })
-
         return updatedProgress
     }
 

@@ -160,7 +160,7 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
         // console.log("notsamegamechallenge" , notCompChallNotSameGame)
 
         const updateProgressArray : Array<any>= [] 
-
+        const progressMp = new Map<number , number> ();
         notCompChallNotSameGame.forEach((ntComplete ,i)=>{
             const requirement = ntComplete.requirements
             console.log("match details" ,matchDetails[i].length , requirement , i )
@@ -168,14 +168,13 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
             const total = challengeProvider!.calculateTotal(matchDetails[i] , requirement)
             const totalAny = total as any 
             // console.log("totalAny" , totalAny);
-            const isCompleted = challengeProvider!.checkIfReqMeet(totalAny , requirement)
-            
+            const {isCompleted , percentage}= challengeProvider!.checkIfReqMeet(totalAny , requirement)
+            progressMp.set(ntComplete.id , percentage);
             if(isCompleted){
                 completedChallenges.push({gameId ,challengeId:  ntComplete.id ,userId})
                 totalReward += ntComplete.reward
                 updateProgressArray.push({requirement : total , challengeId: ntComplete.id ,isCompleted : true ,userId})
             }else{
-                // console.log("false" , );    
                 updateProgressArray.push({requirement : total , challengeId: ntComplete.id , isCompleted :false , userId})
             }
         })
@@ -205,7 +204,13 @@ export const calculateChallengesCompleted:Controller = async (req,res) =>{
             updateProgress = await challengeProvider!.upsertProgress(updateProgressArray)
         }
         
-        res.status(200).json({updateProgress , balance : coins , challenges : completedChall})
+        const progressWithPercentage = updateProgress.map((p)=>{
+            const id = p.id ;
+            const percentage = progressMp.get(id)
+            return {...p , percentage}
+        })
+
+        res.status(200).json({progressWithPercentage , balance : coins , challenges : completedChall})
         
     }catch(err){
         console.log(err)
