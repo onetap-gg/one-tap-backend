@@ -10,9 +10,11 @@ import { gamesRouter } from "./Games/Routes/gamesRouter"
 import { inventoryRouter } from "./Inventory/Router/inventoryRouter"
 import { challengesRouter } from "./challenges/Routers/challengesRouter"
 import { markitPlaceRouter } from "./MarkitPlace/Router/martkitPlacerouter"
+import cors from "cors";
 
 const app = express()
 
+app.use(cors())
 app.use(express.json())
 app.use(helmet())
 app.use(hpp())
