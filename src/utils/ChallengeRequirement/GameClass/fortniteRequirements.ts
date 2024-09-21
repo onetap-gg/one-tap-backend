@@ -3,19 +3,19 @@ import { Dao } from "../../Classes/Dao";
 
 interface IFortnite {
     checkIfReqMeet : (userAchievement : FortniteUserData , goals:FortniteUptoDate) => {isCompleted : boolean , percentage : number}
-    updateMatchDetails : (matchData : FortniteUserData ,userId :string) => Promise<FortniteUptoDateArray> 
-    getDataUptoDate : (start : Date , end: Date , userId : string) => Promise<any>
+    updateMatchDetails : (matchData : FortniteUserData ,authId :string) => Promise<FortniteUptoDateArray> 
+    getDataUptoDate : (start : Date , end: Date , authId : string) => Promise<any>
     calculateTotal : (matches : FortniteUptoDateArray , challenge: FortniteUptoDate) => FortniteUptoDate
     uploadChallenges : (data : any) => Promise<void>
     uploadProgress : (data : UploadProgress) => Promise<any>
-    getProgressData : (userId : string) => Promise<any>
+    getProgressData : (authId : string) => Promise<any>
     upsertProgress : (progress:UpsertData) => Promise<any> 
 }
-type UpsertData = Array<{requirement : FortniteUserData , userId :string  , challengeId :string ,isCompleted:boolean}>
-type UploadProgress = Array<{requirement : FortniteUserData , userId :string  , challengeId :string}>
-type progress = {requirement : FortniteUserData , userId :string  , challengeId :string , isCompleted:boolean}
+type UpsertData = Array<{requirement : FortniteUserData , authId :string  , challengeId :string ,isCompleted:boolean}>
+type UploadProgress = Array<{requirement : FortniteUserData , authId :string  , challengeId :string}>
+type progress = {requirement : FortniteUserData , authId :string  , challengeId :string , isCompleted:boolean}
 
-type UpsertProgress = Array<{requirement : FortniteUserData , userId :string  , challengeId :string ,id :string}>
+type UpsertProgress = Array<{requirement : FortniteUserData , authId :string  , challengeId :string ,id :string}>
 
 export type FortniteUptoDateArray ={
     id : number
@@ -28,7 +28,7 @@ export type FortniteUptoDateArray ={
     total_shots: number;
     shield: number ;
     mode : string
-    userId: any;
+    authId: any;
     match_status : boolean,
 
 }[] | null
@@ -44,7 +44,7 @@ export type FortniteUptoDate = {
     total_shots: number;
     shield: number ;
     mode : string
-    userId: any;
+    authId: any;
     match_status : boolean,
 }
 
@@ -101,26 +101,26 @@ class Fortnite extends Dao implements IFortnite{
         return {isCompleted , percentage};
     } 
 
-    async getDataUptoDate(start: Date, end: Date,userId : string){
-        console.log("getDataUptoDate" ,start , end ,userId)
+    async getDataUptoDate(start: Date, end: Date,authId : string){
+        console.log("getDataUptoDate" ,start , end ,authId)
         const {data , error} = await this.dbInstance!.from("fortnite_data").select(
-            `id , match_start,match_end,kills,knockout,revived,health,total_shots ,shield,userId ,mode ,match_status`
+            `id , match_start,match_end,kills,knockout,revived,health,total_shots ,shield,authId ,mode ,match_status`
         )
         .gte("match_start" , start)
         .lte("match_end" ,  end)
-        .eq("userId" , userId)
+        .eq("authId" , authId)
         if(error) this.throwError(error)
         return data
     }
 
-    async updateMatchDetails(matchData : FortniteUserData ,userId :string){
-        const {data , error } = await this.dbInstance!.from("fortnite_data").insert({...matchData,userId}).select()
+    async updateMatchDetails(matchData : FortniteUserData ,authId :string){
+        const {data , error } = await this.dbInstance!.from("fortnite_data").insert({...matchData,authId}).select()
         if(error) this.throwError(error);
         return data;
     }
     calculateTotal(matches : FortniteUptoDateArray, challenge : FortniteUptoDate){
         const status = challenge.match_status
-        const total : FortniteUptoDate = {match_status:status,match_start : "" , match_end: "", id : 0 , userId :"", kills: 0 , knockout : 0 , revived : 0 , health : 0 , total_shots : 0, shield :  0 ,mode:""}
+        const total : FortniteUptoDate = {match_status:status,match_start : "" , match_end: "", id : 0 , authId :"", kills: 0 , knockout : 0 , revived : 0 , health : 0 , total_shots : 0, shield :  0 ,mode:""}
         matches!.forEach((match)=>{
                 total.health +=  match.health 
                 total.kills += match.kills
@@ -159,7 +159,7 @@ class Fortnite extends Dao implements IFortnite{
 
         console.log("challengeArray", progressMp)
         if(challengeIdArray.length>0){
-            res = await this.dbInstance!!.from("vallorent_progress").select("id , challengeId ,userId , requirement").in("challengeId" ,challengeIdArray );
+            res = await this.dbInstance!!.from("vallorent_progress").select("id , challengeId ,authId , requirement").in("challengeId" ,challengeIdArray );
             data = res.data;
             error = res.error
             if(error) this.throwError(error);
@@ -189,8 +189,8 @@ class Fortnite extends Dao implements IFortnite{
             if(!val.isCompleted){
                 const requirement = val.requirement
                 const challengeId = val.challengeId
-                const userId = val.userId
-                insertArray.push({requirement , challengeId , userId});
+                const authId = val.authId
+                insertArray.push({requirement , challengeId , authId});
             }
         })
 
@@ -221,7 +221,7 @@ class Fortnite extends Dao implements IFortnite{
     }
 
 
-    async getProgressData(userId : string ){
+    async getProgressData(authId : string ){
         const {data,error} = await this.dbInstance!.from("fornite_progress").select("*");
         if(error) this.throwError(error)
         return data;

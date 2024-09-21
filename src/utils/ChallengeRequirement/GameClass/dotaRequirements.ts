@@ -3,20 +3,20 @@ import { Dao } from "../../Classes/Dao";
 
 interface IDota {
     checkIfReqMeet : (userAchievement : DotaUserData , goals:DotaUptoDateData) => {isCompleted : boolean , percentage : number}
-    updateMatchDetails : (matchData : DotaUptoDateData ,userId :string) => Promise<DotaUptoDateDataArray> 
-    getDataUptoDate : (start : Date , end: Date , userId :string) => Promise<DotaUptoDateDataArray>
+    updateMatchDetails : (matchData : DotaUptoDateData ,authId :string) => Promise<DotaUptoDateDataArray> 
+    getDataUptoDate : (start : Date , end: Date , authId :string) => Promise<DotaUptoDateDataArray>
     calculateTotal : (matches : DotaUptoDateDataArray , challenge : DotaUptoDateData) => DotaUptoDateData
     uploadChallenges : (data : any) => Promise<void>
     uploadProgress : (data : UploadProgress) => Promise<any>
-    getProgressData : (userId : string) => Promise<any>
+    getProgressData : (authId : string) => Promise<any>
     upsertProgress : (progress:UpsertData) => Promise<any>  
 }
-type UpsertData = Array<{requirement : DotaUserData , userId :string  , challengeId :string ,isCompleted:boolean}>
+type UpsertData = Array<{requirement : DotaUserData , authId :string  , challengeId :string ,isCompleted:boolean}>
 
-type UploadProgress = Array<{requirement : DotaUserData , userId :string  , challengeId :string}>
-type progress = {requirement : DotaUserData , userId :string  , challengeId :string , isCompleted:boolean}
+type UploadProgress = Array<{requirement : DotaUserData , authId :string  , challengeId :string}>
+type progress = {requirement : DotaUserData , authId :string  , challengeId :string , isCompleted:boolean}
 
-type UpsertProgress = Array<{requirement : DotaUserData , userId :string  , challengeId :string , id : string}>
+type UpsertProgress = Array<{requirement : DotaUserData , authId :string  , challengeId :string , id : string}>
 
 export type DotaUptoDateDataArray ={
     id: number;
@@ -27,7 +27,7 @@ export type DotaUptoDateDataArray ={
     death: number;
     creep_score: number;
     physical_damage_dealt_players: number;
-    userId: string;
+    Auth: string;
     match_status : boolean
 }[] | null
 
@@ -41,7 +41,7 @@ export type DotaUptoDateData = {
     death: number;
     creep_score: number;
     physical_damage_dealt_players: number;
-    userId: string;
+    Auth: string;
     match_status : boolean
 }
 
@@ -98,13 +98,13 @@ class Dota extends Dao implements IDota{
         return {isCompleted , percentage}
     } 
 
-    async updateMatchDetails(matchData: DotaUserData, userId: string) {
-        const {data , error } = await this.dbInstance!.from("dota_data").insert({...matchData,userId}).select()
+    async updateMatchDetails(matchData: DotaUserData, authId: string) {
+        const {data , error } = await this.dbInstance!.from("dota_data").insert({...matchData,authId}).select()
         if(error) this.throwError(error);
         return data;
     };
 
-    async getDataUptoDate(start: Date, end: Date,userId : string){
+    async getDataUptoDate(start: Date, end: Date,authId : string){
         const {data , error} = await this.dbInstance!.from("dota_data").select(
         `id, 
         match_start,
@@ -114,13 +114,13 @@ class Dota extends Dao implements IDota{
         death, 
         creep_score, 
         physical_damage_dealt_players,
-        userId,
+        Auth,
         match_status
         `
         )
         .gte("match_start" , start)
         .lte("match_end" ,  end)
-        .eq("userId" , userId)
+        .eq("Auth" , authId)
         if(error) this.throwError(error)
         return data
     }
@@ -130,7 +130,7 @@ class Dota extends Dao implements IDota{
         
         const status = challenge.match_status
         const total : DotaUptoDateData = 
-        {match_status:status,match_start : "" , match_end: "", id : 0 , userId :"",kills : 0  , assists : 0 , death : 0 , creep_score : 0 , physical_damage_dealt_players : 0 }
+        {match_status:status,match_start : "" , match_end: "", id : 0 , Auth :"",kills : 0  , assists : 0 , death : 0 , creep_score : 0 , physical_damage_dealt_players : 0 }
 
         matches!.forEach(match => {
         
@@ -170,7 +170,7 @@ class Dota extends Dao implements IDota{
 
         console.log("challengeArray", progressMp)
         if(challengeIdArray.length>0){
-            res = await this.dbInstance!!.from("vallorent_progress").select("id , challengeId ,userId , requirement").in("challengeId" ,challengeIdArray );
+            res = await this.dbInstance!!.from("vallorent_progress").select("id , challengeId ,Auth , requirement").in("challengeId" ,challengeIdArray );
             data = res.data;
             error = res.error
             if(error) this.throwError(error);
@@ -189,7 +189,7 @@ class Dota extends Dao implements IDota{
                     if(found.isCompleted){
                         deleteArray.push(dt.id)
                     }else{
-                        updateArray.push({...dt , requirement :found.requirement });
+                        updateArray.push({...dt , requirement :found.requirement, authId: dt.Auth });
                     }
                     progressMp.delete(id);
                 } 
@@ -200,8 +200,8 @@ class Dota extends Dao implements IDota{
             if(!val.isCompleted){
                 const requirement = val.requirement
                 const challengeId = val.challengeId
-                const userId = val.userId
-                insertArray.push({requirement , challengeId , userId});
+                const authId = val.authId
+                insertArray.push({requirement , challengeId , authId});
             }
         })
 
@@ -232,7 +232,7 @@ class Dota extends Dao implements IDota{
     }
 
 
-    async getProgressData(userId : string ){
+    async getProgressData(authId : string ){
         const {data,error} = await this.dbInstance!.from("dota_progress").select("*");
         if(error) this.throwError(error)
         return data;

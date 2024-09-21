@@ -41,7 +41,7 @@ export type OnGoingChallenges = {
 
 export type CompletedChallenges ={
     id: any;
-    userId: any;
+    Auth: any;
     challengeId: any;
     Game: {
         gameName: any;

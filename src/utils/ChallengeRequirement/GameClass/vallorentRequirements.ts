@@ -2,21 +2,21 @@ import { Dao } from "../../Classes/Dao";
 
 interface IVallorent {
     checkIfReqMeet : (userAchievement : VallorentUserData , goals:VallorentUptoDateData) => {isCompleted : boolean , percentage : number}
-    updateMatchDetails : (matchData : VallorentUserData ,userId :string) => Promise<VallorentUptoDateDataArray> 
-    getDataUptoDate : (start : string , end: string , userId : string) => Promise<VallorentUptoDateDataArray>
+    updateMatchDetails : (matchData : VallorentUserData ,authId :string) => Promise<VallorentUptoDateDataArray> 
+    getDataUptoDate : (start : string , end: string , authId : string) => Promise<VallorentUptoDateDataArray>
     calculateTotal : (matches : VallorentUptoDateDataArray , challenge : VallorentUptoDateData) => VallorentUptoDateData
     uploadChallenges : (data : any) => Promise<void>
     uploadProgress : (data : UploadProgress) => Promise<any>
-    getProgressData : (userId : string) => Promise<any>
+    getProgressData : (authId : string) => Promise<any>
     upsertProgress : (progress:UpsertData) => Promise<any> 
 
 }
-type UpsertData = Array<{requirement : VallorentUserData , userId :string  , challengeId :string ,isCompleted:boolean}>
+type UpsertData = Array<{requirement : VallorentUserData , authId :string  , challengeId :string ,isCompleted:boolean}>
 
-type UploadProgress = Array<{requirement : VallorentUserData , userId :string  , challengeId :string }>
-type progress = {requirement : VallorentUserData , userId :string  , challengeId :string , isCompleted:boolean}
+type UploadProgress = Array<{requirement : VallorentUserData , authId :string  , challengeId :string }>
+type progress = {requirement : VallorentUserData , authId :string  , challengeId :string , isCompleted:boolean}
 
-type UpsertProgress = Array<{requirement : VallorentUserData , userId :string  , challengeId :string , id: string ,isCompleted:string}>
+type UpsertProgress = Array<{requirement : VallorentUserData , authId :string  , challengeId :string , id: string ,isCompleted:string}>
 
 export type VallorentUptoDateDataArray = {
     id: number;
@@ -35,7 +35,7 @@ export type VallorentUptoDateDataArray = {
     region: string;
     game_mode: string;
     damage_taken: number;
-    userId : string
+    authId : string
 }[] | null
 
 export type VallorentUptoDateData = {
@@ -55,7 +55,7 @@ export type VallorentUptoDateData = {
     region: string;
     game_mode: string;
     damage_taken: number;
-    userId : string
+    authId : string
 }
 
 
@@ -136,19 +136,19 @@ class Vallorent extends Dao implements IVallorent{
     } 
     
 
-    async updateMatchDetails(matchData: VallorentUserData, userId: string){
-        const {data , error} = await this.dbInstance!.from("valorent_data").insert({...matchData,userId}).select()
+    async updateMatchDetails(matchData: VallorentUserData, authId: string){
+        const {data , error} = await this.dbInstance!.from("valorent_data").insert({...matchData,authId}).select()
         if(error) this.throwError(error);
         return data;
     }  
 
-    async getDataUptoDate(start: string, end: string , userId :string){
-        console.log("hello" ,start ,end , userId);
+    async getDataUptoDate(start: string, end: string , authId :string){
+        console.log("hello" ,start ,end , authId);
         const {data , error} = await this.dbInstance!.from("valorent_data")
-        .select(`id , match_start ,match_end ,total_kills , deaths ,assists ,headshot , spikes_planted ,spikes_defuse , damage_done ,team_scores ,   match_status , agent, region ,game_mode ,damage_taken,userId`)
+        .select(`id , match_start ,match_end ,total_kills , deaths ,assists ,headshot , spikes_planted ,spikes_defuse , damage_done ,team_scores ,   match_status , agent, region ,game_mode ,damage_taken,authId`)
         .gte("match_start" , start)
         .lte("match_end" ,  end)
-        .eq("userId" , userId)
+        .eq("authId" , authId)
         if(error) this.throwError(error)
         console.log("getDataUptoDate" , data)
         return data
@@ -172,7 +172,7 @@ class Vallorent extends Dao implements IVallorent{
             region: "",
             game_mode: "",
             damage_taken: 0,
-            userId : ""
+            authId : ""
         }
         
         matches!.forEach(match => {
@@ -217,7 +217,7 @@ class Vallorent extends Dao implements IVallorent{
 
         console.log("challengeArray", progressMp)
         if(challengeIdArray.length>0){
-            res = await this.dbInstance!!.from("vallorent_progress").select("id , challengeId ,userId , requirement").in("challengeId" ,challengeIdArray );
+            res = await this.dbInstance!!.from("vallorent_progress").select("id , challengeId ,authId , requirement").in("challengeId" ,challengeIdArray );
             data = res.data;
             error = res.error
             if(error) this.throwError(error);
@@ -247,8 +247,8 @@ class Vallorent extends Dao implements IVallorent{
             if(!val.isCompleted){
                 const requirement = val.requirement
                 const challengeId = val.challengeId
-                const userId = val.userId
-                insertArray.push({requirement , challengeId , userId});
+                const authId = val.authId
+                insertArray.push({requirement , challengeId , authId});
             }
         })
 
@@ -277,7 +277,7 @@ class Vallorent extends Dao implements IVallorent{
         return updatedProgress
     }
 
-    async getProgressData(userId : string ){
+    async getProgressData(authId : string ){
         const {data,error} = await this.dbInstance!.from("vallorent_progress").select("*");
         if(error) this.throwError(error)
         return data;
