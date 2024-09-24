@@ -8,9 +8,9 @@ import {uploadValorantProgress} from "../Controllers/uploadValorantProgress"
 
 export const challengesRouter = Router()
 
-challengesRouter.get("/completed-challenges/:gameId/:authId",completedChallenges)
+challengesRouter.get("/completed-challenges/:gameId/:userId",completedChallenges)
 challengesRouter.get("/ongoing-challenges/:gameId",onGoingChallenges)
-challengesRouter.post("/update-completed-challenges",calculateChallengesCompleted)
+challengesRouter.post("/update-completed-challenges",calculateChallengesCompleted) ///// add to call after match end
 challengesRouter.post("/upload-challenges",uploadChallenges)
-challengesRouter.get("/get-progress/:gameId/:authId")
+challengesRouter.get("/get-progress/:gameId/:userId")
 challengesRouter.post("/valorant/progress/:authId", uploadValorantProgress)

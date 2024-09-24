@@ -1,11 +1,11 @@
 import { Controller } from "../../utils/interfaces/controller"
 import { inventoryDao } from "../Dao/InventoryDao"
 export const allInventoryInfo : Controller = async (req,res)=>{
-    const authId:string = req.params.authId!.toString()
+    const userId:string = req.params.userId!.toString()
     try{
-        const coinsSpend = await inventoryDao.getCoinsSpend(authId)
-        const coinsEarned = await inventoryDao.getCoinsEarned(authId)
-        const purchaseHistory = await inventoryDao.getPurchaseHistory(authId)
+        const coinsSpend = await inventoryDao.getCoinsSpend(userId)
+        const coinsEarned = await inventoryDao.getCoinsEarned(userId)
+        const purchaseHistory = await inventoryDao.getPurchaseHistory(userId)
 
         const response =  {coinsSpend , coinsEarned ,purchaseHistory};
         res.status(200).send(response)

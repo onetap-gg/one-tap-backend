@@ -2,9 +2,9 @@ import { Controller } from "../../utils/interfaces/controller";
 import { userDao } from "../Dao/userDao";
 
 export const basicInfoController: Controller = async (req, res) => {
-  const { authId } = req.params;
+  const { userId } = req.params;
   try {
-    const data = await userDao.getUserBasicInfo(authId);
+    const data = await userDao.getUserBasicInfo(userId);
     res.status(200).json(data);
   } catch (err: any) {
     console.log(err);

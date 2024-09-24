@@ -8,7 +8,7 @@ import { CompletedChallenges } from "../Types/types";
 type updateCompletedChallenges = Array<{
   gameId: string;
   challengeId: string;
-  authId: string;
+  userId: string;
 }>;
 
 interface DaoType {
@@ -19,12 +19,12 @@ interface DaoType {
   getOngoingChallenges: (gameId: string) => Promise<OnGoingChallenges>;
   getCompletedChallenges: (
     gameId: string,
-    authId: string
+    userId: string
   ) => Promise<CompletedChallenges>;
   updateChallengesCompleted: (
     completed: updateCompletedChallenges
   ) => Promise<any>;
-  updateTotalCoins: (authId: string, coins: number) => Promise<any>;
+  updateTotalCoins: (userId: string, coins: number) => Promise<any>;
 }
 
 class ChallengesDao extends Dao implements DaoType {
@@ -76,11 +76,11 @@ class ChallengesDao extends Dao implements DaoType {
 
   getCompletedChallenges: (
     gameId: string,
-    authId: string
-  ) => Promise<CompletedChallenges> = async (gameId, authId) => {
+    userId: string
+  ) => Promise<CompletedChallenges> = async (gameId, userId) => {
     const { data, error } = await this.dbInstance!.from("completed_challenges")
-      .select("id ,Auth, challengeId, Game(gameName) , gameId ")
-      .eq("Auth", authId)
+      .select("id ,userId, challengeId, Game(gameName) , gameId ")
+      .eq("userId", userId)
       .eq("gameId", gameId);
     if (error) this.throwError(error);
     return data;
@@ -89,7 +89,7 @@ class ChallengesDao extends Dao implements DaoType {
   getCompletedChallengeById = async (id: string) => {
     const { data, error } = await this.dbInstance!.from("completed_challenges")
       .select(
-        "id ,Auth, challengeId, game_challenges(name), Game(gameName) , gameId "
+        "id ,userId, challengeId, game_challenges(name), Game(gameName) , gameId "
       )
       .eq("challengeId", id);
     if (error) this.throwError(error);
@@ -106,33 +106,23 @@ class ChallengesDao extends Dao implements DaoType {
     return data;
   };
 
-  updateTotalCoins: (authId: string, coins: number) => Promise<any> = async (
-    authId,
+  updateTotalCoins: (userId: string, coins: number) => Promise<any> = async (
+    userId,
     coins
   ) => {
     const { data, error } = await this.dbInstance!.from("User")
       .select("balance")
-      .eq("Auth", authId)
+      .eq("id", userId)
       .single();
     if (error) this.throwError(error);
     const totalCoins = data?.balance + coins;
     const res = await this.dbInstance!.from("User")
       .update({ balance: totalCoins })
-      .eq("Auth", authId)
+      .eq("id", userId)
       .select()
       .single();
     if (res.error) this.throwError(res.error);
     return res.data.balance;
-  };
-
-  upsertValorantProgress: (gameData: any) => Promise<any> = async (
-    gameData
-  ) => {
-    const { data, error } = await this.dbInstance!.from("valorent_data").upsert(
-      gameData
-    );
-    if (error) this.throwError(error);
-    return data;
   };
 }
 

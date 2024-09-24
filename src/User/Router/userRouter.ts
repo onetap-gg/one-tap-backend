@@ -6,8 +6,8 @@ import { createProfileController } from "../Controllers/createUserProfile";
 
 export const userRouter = Router();
 
-userRouter.get("/basic-info/:authId", basicInfoController);
+userRouter.get("/basic-info/:userId", basicInfoController);
 
-userRouter.get("/profile-data/:authId", profileInfoController);
+userRouter.get("/profile-data/:userId", profileInfoController);
 
 userRouter.post("/profile-data/:authId", updateProfileInfoController);

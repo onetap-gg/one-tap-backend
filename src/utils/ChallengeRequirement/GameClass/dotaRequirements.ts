@@ -3,20 +3,20 @@ import { Dao } from "../../Classes/Dao";
 
 interface IDota {
     checkIfReqMeet : (userAchievement : DotaUserData , goals:DotaUptoDateData) => {isCompleted : boolean , percentage : number}
-    updateMatchDetails : (matchData : DotaUptoDateData ,authId :string) => Promise<DotaUptoDateDataArray> 
-    getDataUptoDate : (start : Date , end: Date , authId :string) => Promise<DotaUptoDateDataArray>
+    updateMatchDetails : (matchData : DotaUptoDateData ,userId :string) => Promise<DotaUptoDateDataArray> 
+    getDataUptoDate : (start : Date , end: Date , userId :string) => Promise<DotaUptoDateDataArray>
     calculateTotal : (matches : DotaUptoDateDataArray , challenge : DotaUptoDateData) => DotaUptoDateData
     uploadChallenges : (data : any) => Promise<void>
     uploadProgress : (data : UploadProgress) => Promise<any>
-    getProgressData : (authId : string) => Promise<any>
+    getProgressData : (userId : string) => Promise<any>
     upsertProgress : (progress:UpsertData) => Promise<any>  
 }
-type UpsertData = Array<{requirement : DotaUserData , authId :string  , challengeId :string ,isCompleted:boolean}>
+type UpsertData = Array<{requirement : DotaUserData , userId :string  , challengeId :string ,isCompleted:boolean}>
 
-type UploadProgress = Array<{requirement : DotaUserData , authId :string  , challengeId :string}>
-type progress = {requirement : DotaUserData , authId :string  , challengeId :string , isCompleted:boolean}
+type UploadProgress = Array<{requirement : DotaUserData , userId :string  , challengeId :string}>
+type progress = {requirement : DotaUserData , userId :string  , challengeId :string , isCompleted:boolean}
 
-type UpsertProgress = Array<{requirement : DotaUserData , authId :string  , challengeId :string , id : string}>
+type UpsertProgress = Array<{requirement : DotaUserData , userId :string  , challengeId :string , id : string}>
 
 export type DotaUptoDateDataArray ={
     id: number;
@@ -98,13 +98,13 @@ class Dota extends Dao implements IDota{
         return {isCompleted , percentage}
     } 
 
-    async updateMatchDetails(matchData: DotaUserData, authId: string) {
-        const {data , error } = await this.dbInstance!.from("dota_data").insert({...matchData,authId}).select()
+    async updateMatchDetails(matchData: DotaUserData, userId: string) {
+        const {data , error } = await this.dbInstance!.from("dota_data").insert({...matchData,userId}).select()
         if(error) this.throwError(error);
         return data;
     };
 
-    async getDataUptoDate(start: Date, end: Date,authId : string){
+    async getDataUptoDate(start: Date, end: Date,userId : string){
         const {data , error} = await this.dbInstance!.from("dota_data").select(
         `id, 
         match_start,
@@ -120,7 +120,7 @@ class Dota extends Dao implements IDota{
         )
         .gte("match_start" , start)
         .lte("match_end" ,  end)
-        .eq("Auth" , authId)
+        .eq("Auth" , userId)
         if(error) this.throwError(error)
         return data
     }
@@ -189,7 +189,7 @@ class Dota extends Dao implements IDota{
                     if(found.isCompleted){
                         deleteArray.push(dt.id)
                     }else{
-                        updateArray.push({...dt , requirement :found.requirement, authId: dt.Auth });
+                        updateArray.push({...dt , requirement :found.requirement, userId: dt.Auth });
                     }
                     progressMp.delete(id);
                 } 
@@ -200,8 +200,8 @@ class Dota extends Dao implements IDota{
             if(!val.isCompleted){
                 const requirement = val.requirement
                 const challengeId = val.challengeId
-                const authId = val.authId
-                insertArray.push({requirement , challengeId , authId});
+                const userId = val.userId
+                insertArray.push({requirement , challengeId , userId});
             }
         })
 
@@ -232,7 +232,7 @@ class Dota extends Dao implements IDota{
     }
 
 
-    async getProgressData(authId : string ){
+    async getProgressData(userId : string ){
         const {data,error} = await this.dbInstance!.from("dota_progress").select("*");
         if(error) this.throwError(error)
         return data;

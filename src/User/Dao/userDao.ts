@@ -17,7 +17,7 @@ interface BasicData {
 
 interface DaoType {
   getUserBasicInfo: (userId: string) => Promise<UserData>;
-  updateUserBasicInfo: (userData: BasicData, userId: string) => Promise<any>;
+  updateUserBasicInfo: (userData: BasicData, authId: string) => Promise<any>;
   getUserProfileData: (userId: string) => Promise<UserProfileDataArray>;
   getIsUserPremium: (userId: string) => Promise<IsPremiumUserType>;
   getBalance: (userId: string) => Promise<Balance>;
@@ -36,10 +36,10 @@ class UserDoa extends Dao implements DaoType {
     if (this.dbInstance === null) this.throwError("DB instance is not present");
   }
 
-  getUserBasicInfo: (authId: string) => Promise<UserData> = async (authId) => {
+  getUserBasicInfo: (userId: string) => Promise<UserData> = async (userId) => {
     const { data, error } = await this.dbInstance!.from("User")
       .select()
-      .eq("Auth", authId)
+      .eq("userId", userId)
       .single();
 
     console.log(data, error);
@@ -48,8 +48,8 @@ class UserDoa extends Dao implements DaoType {
     return data;
   };
 
-  getUserProfileData: (authId: string) => Promise<UserProfileDataArray> =
-    async (authId) => {
+  getUserProfileData: (userId: string) => Promise<UserProfileDataArray> =
+    async (userId) => {
       const { data, error } = await this.dbInstance!.from("UserGame")
         .select(
           `
@@ -63,25 +63,25 @@ class UserDoa extends Dao implements DaoType {
             gameBalance
         `
         )
-        .eq(`Auth`, authId);
+        .eq(`userId`, userId);
       if (error) this.throwError(error);
       return data;
     };
 
-  getIsUserPremium: (authId: string) => Promise<IsPremiumUserType> = async (
-    authId
+  getIsUserPremium: (userId: string) => Promise<IsPremiumUserType> = async (
+    userId
   ) => {
     const { data, error } = await this.dbInstance!.from("User")
       .select(`premiumUser`)
-      .eq(`Auth`, authId);
+      .eq(`userId`, userId);
     if (error) this.throwError(error);
     return data;
   };
 
-  getBalance: (authId: string) => Promise<any> = async (authId) => {
+  getBalance: (userId: string) => Promise<any> = async (userId) => {
     const { data, error } = await this.dbInstance!.from("User")
       .select(`balance`)
-      .eq(`Auth`, authId);
+      .eq(`userId`, userId);
     if (error) this.throwError(error);
     return data;
   };
@@ -97,7 +97,7 @@ class UserDoa extends Dao implements DaoType {
     return data;
   };
 
-  updateUserBasicInfo: (userData: BasicData, authId: string) => Promise<any> =
+  updateUserBasicInfo: (userData: BasicData, userId: string) => Promise<any> =
     async (userData: BasicData, authId: string) => {
       const { data, error } = await this.dbInstance!.from("User")
         .update(userData)
