@@ -36,10 +36,10 @@ class UserDoa extends Dao implements DaoType {
     if (this.dbInstance === null) this.throwError("DB instance is not present");
   }
 
-  getUserBasicInfo: (userId: string) => Promise<UserData> = async (userId) => {
+  getUserBasicInfo: (authId: string) => Promise<UserData> = async (authId) => {
     const { data, error } = await this.dbInstance!.from("User")
       .select()
-      .eq("userId", userId)
+      .eq("Auth", authId)
       .single();
 
     console.log(data, error);
