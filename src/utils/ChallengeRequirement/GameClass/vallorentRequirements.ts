@@ -107,7 +107,7 @@ export type VallorentUserData = {
   agent: string;
   region: string;
   game_mode: string;
-  damage_taken: null;
+  damage_taken: number;
 };
 
 class Vallorent extends Dao implements IVallorent {
@@ -166,7 +166,7 @@ class Vallorent extends Dao implements IVallorent {
     }
     let total: number = 0;
     let player: number = 0;
-    // console.log("amount of match property" ,achieved)
+    console.log("amount of match property", achieved);
     total =
       goal.assists +
       goal.damage_done +
@@ -277,7 +277,7 @@ class Vallorent extends Dao implements IVallorent {
     const challengeIdArray: Array<string> = [];
     const progressMp = new Map<string, progress>();
 
-    console.log("progress", progress);
+    console.log("progress from upsert progress", progress);
 
     progress.forEach((pr) => {
       const id = pr.challengeId;
@@ -302,6 +302,7 @@ class Vallorent extends Dao implements IVallorent {
     const deleteArray: Array<string> = [];
 
     if (data) {
+      console.log("data from vallorent_progress: ", data);
       data.forEach((dt) => {
         const id = dt.challengeId;
         const found = progressMp.get(id);

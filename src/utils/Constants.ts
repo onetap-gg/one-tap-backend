@@ -9,7 +9,7 @@ export class GAME{
 
 export class NUMBER{
     static ONE = 1;
-    static TWO = 2;
+    static TWO = 21640;
     static THREE = 3;
     static FOUR = 4; 
     static FIVE = 5;
