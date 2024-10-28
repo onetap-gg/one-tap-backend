@@ -29,7 +29,7 @@ export type Balance =
       balance: any;
     }[]
   | null;
-
+  
 class UserDoa extends Dao implements DaoType {
   constructor() {
     super();

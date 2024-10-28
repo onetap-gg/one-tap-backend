@@ -1,5 +1,3 @@
-
-
 import express , {Response , Request} from "express"
 import helmet from "helmet"
 import hpp from "hpp"
@@ -11,6 +9,7 @@ import { inventoryRouter } from "./Inventory/Router/inventoryRouter"
 import { challengesRouter } from "./challenges/Routers/challengesRouter"
 import { markitPlaceRouter } from "./MarkitPlace/Router/martkitPlacerouter"
 import cors from "cors";
+import { OverWolfIdToNativeMapper } from "./utils/Middleware/OverWolfToNativeIdMapper"
 
 const app = express()
 
@@ -25,10 +24,13 @@ app.get("/",async (req :Request ,res : Response)=>{
 
 app.use("/user", userRouter)
 app.use("/game",gamesRouter)
-app.use("/leaderboard",leaderBoardRouter)
 app.use("/inventory",inventoryRouter)
+app.use("/marketplace",markitPlaceRouter)
+
+app.use(OverWolfIdToNativeMapper)
+
+app.use("/leaderboard",leaderBoardRouter)
 app.use("/challenges",challengesRouter)
-app.unsubscribe("/marketplace",markitPlaceRouter)
 
 app.use("*" , (req,res)=>{
     res.status(404).json("No Such Route")

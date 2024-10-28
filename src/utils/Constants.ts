@@ -7,14 +7,29 @@ export class GAME{
     static FORTNITE = "FORTNITE";
 }
 
+ 
+
+export enum OVER_WOLF_IDS{
+    VALORENT = 21640
+}
+
+
 export class NUMBER{
     static ONE = 1;
-    static TWO = 21640;
+    static TWO = 2;
     static THREE = 3;
     static FOUR = 4; 
     static FIVE = 5;
     static SIX = 6;
 }
+
+export const OVER_WOLF_TO_GAME_ID_MAPPER = {
+    VALORENT : {
+        GameId : NUMBER.TWO,
+        OverWolfId : OVER_WOLF_IDS.VALORENT
+    }
+}
+ 
 
 export class GAME_ID {
     static DOTA = NUMBER.ONE ;

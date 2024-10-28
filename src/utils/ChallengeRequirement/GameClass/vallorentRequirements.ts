@@ -120,11 +120,12 @@ class Vallorent extends Dao implements IVallorent {
     userAchievement: VallorentUserData,
     goal: VallorentUptoDateData
   ) {
-    // console.log( "user achievement" , userAchievement , goal)
+    console.log("--------------------checking if challenge is completed------------------")
+    console.log( "user achievement" , userAchievement)
+    console.log("goal" , goal)
+    
     if (userAchievement === null) this.throwError("Null object");
     let achieved = 0;
-    // console.log("assists" , "user_assists" ,userAchievement.assists , "goal_assists",goal.assists)
-    // console.log("spikes_defuse" , "spikes_defuse" ,userAchievement.spikes_defuse , "spikes_defuse",goal.spikes_defuse)
     if (userAchievement.assists >= goal.assists) {
       achieved++;
       console.log(1);
@@ -177,7 +178,7 @@ class Vallorent extends Dao implements IVallorent {
       goal.spikes_planted +
       goal.team_scores +
       goal.total_kills;
-    if (userAchievement.damage_taken)
+
       player =
         userAchievement.assists +
         userAchievement.damage_done +
@@ -188,11 +189,16 @@ class Vallorent extends Dao implements IVallorent {
         userAchievement.spikes_planted +
         userAchievement.team_scores +
         userAchievement.total_kills;
-
+    console.log("player" , player)
+    console.log("total", total)
     let percentage: number = (player / total) * 100;
-
+    
     let isCompleted = false;
     if (achieved === 9) isCompleted = true;
+
+    console.log("is completed" ,isCompleted)
+    console.log("percentage" ,percentage)
+    console.log("------------------------------------------------------------")
     return { isCompleted, percentage };
   }
 
@@ -222,6 +228,11 @@ class Vallorent extends Dao implements IVallorent {
     matches: VallorentUptoDateDataArray,
     challenge: VallorentUptoDateData
   ) {
+
+    console.log("----------------------calculateTotal------------------------")
+    console.log()
+
+
     const status = challenge.match_status;
     const total: VallorentUptoDateData = {
       id: 0,
@@ -266,6 +277,7 @@ class Vallorent extends Dao implements IVallorent {
   };
 
   async uploadProgress(progress: UploadProgress) {
+    console.log("progress" , progress)
     const { data, error } = await this.dbInstance!.from("vallorent_progress")
       .insert([...progress])
       .select();
