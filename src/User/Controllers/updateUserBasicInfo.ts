@@ -23,6 +23,6 @@ export const updateProfileInfoController: Controller = async (req, res) => {
     res.status(200).json(response);
   } catch (err: any) {
     console.log(err);
-    res.status(500).json("server error");
+    res.status(500).json(err);
   }
 };
