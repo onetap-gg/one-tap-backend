@@ -1,5 +1,6 @@
 import express , {Response , Request} from "express"
 import helmet from "helmet"
+import cors from "cors"
 import hpp from "hpp"
 import { envVariables } from "./utils/envVariables"
 import { userRouter } from "./User/Router/userRouter"
@@ -12,6 +13,7 @@ import cors from "cors";
 import { OverWolfIdToNativeMapper } from "./utils/Middleware/OverWolfToNativeIdMapper"
 
 const app = express()
+app.use(cors())
 
 app.use(cors())
 app.use(express.json())
