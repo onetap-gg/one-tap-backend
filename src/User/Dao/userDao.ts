@@ -1,39 +1,68 @@
 import { Dao } from "../../utils/Classes/Dao";
 import { UserData } from "../Types/types";
 import { UserProfileDataArray } from "../Types/types";
-import {IsPremiumUserType} from "../Types/types"
+import { IsPremiumUserType } from "../Types/types";
 
-interface DaoType {
-    getUserBasicInfo :  (userId : string)=> Promise<UserData>;
-    getUserProfileData : (userId : string) => Promise<UserProfileDataArray>;
-    getIsUserPremium : (userId : string) => Promise<IsPremiumUserType>
-    getBalance : (userId:string) => Promise<Balance> 
-    getUserId : (authId:string) => Promise<number>
+interface BasicData {
+  userName: string;
+  profilePicture: string;
+  userCustomId: string;
+  profileName: string;
+  globalRanking: number;
+  balance: Number;
+  Auth: string;
+  level: number;
+  premiumUser: boolean;
 }
 
-export type Balance = {
-    balance: any;
-}[] | null
+interface DaoType {
+  getUserBasicInfo: (userId: string) => Promise<UserData>;
+  getUserBasicInfoAll: () => Promise<any>;
+  updateUserBasicInfo: (userData: BasicData, authId: string) => Promise<any>;
+  getUserProfileData: (userId: string) => Promise<UserProfileDataArray>;
+  getIsUserPremium: (userId: string) => Promise<IsPremiumUserType>;
+  getBalance: (userId: string) => Promise<Balance>;
+  createUserProfile: (userData: BasicData) => Promise<any>;
+}
 
-class UserDoa extends Dao implements DaoType{
-    constructor(){
-        super()
-        if(this.dbInstance === null) this.throwError("DB instance is not present");
-    }
+export type Balance =
+  | {
+      balance: any;
+    }[]
+  | null;
 
-    getUserBasicInfo: (userId: string) => Promise<UserData> = async (userId) =>{
-        const {data ,error} = await this.dbInstance!
-            .from('User')
-            .select()
-            .eq('id',userId)
-            .single()
+class UserDoa extends Dao implements DaoType {
+  constructor() {
+    super();
+    if (this.dbInstance === null) this.throwError("DB instance is not present");
+  }
 
-        if(error) this.throwError(error)
-        return data
-    }
+  getUserBasicInfo: (authId: string) => Promise<UserData> = async (authId) => {
+    const { data, error } = await this.dbInstance!.from("User")
+      .select()
+      .eq("Auth", authId)
+      .single();
 
-    getUserProfileData: (userId: string) => Promise<UserProfileDataArray> = async (userId) =>{
-        const {data ,error} =await this.dbInstance!.from('UserGame').select(`
+    console.log(data, error);
+
+    if (error) this.throwError(error);
+    return data;
+  };
+
+  getUserBasicInfoAll: () => Promise<any> = async () => {
+    const { data, error } = await this.dbInstance!.from("User").select();
+
+    console.log(data, error);
+
+    if (error) this.throwError(error);
+    return data;
+  };
+
+  getUserProfileData: (userId: string) => Promise<UserProfileDataArray> =
+    async (userId) => {
+      const { data, error } = await this.dbInstance!.from("UserGame")
+        .select(
+          `
             User(userName),
             id,
             isFav,
@@ -42,40 +71,71 @@ class UserDoa extends Dao implements DaoType{
             gameWon,
             gameLoss,
             gameBalance
-        `).eq(`User.id`, userId)
-        if(error) this.throwError(error)
-        return data
-    }
+        `
+        )
+        .eq(`userId`, userId);
+      if (error) this.throwError(error);
+      return data;
+    };
 
-    getIsUserPremium : (userId : string) => Promise<IsPremiumUserType> = async (userId) =>{
-        const {data , error} = await this.dbInstance!.from('User').select(`premiumUser`).eq(`userId` , userId)
-        if(error) this.throwError(error)
-        return data
-    }
+  getIsUserPremium: (userId: string) => Promise<IsPremiumUserType> = async (
+    userId
+  ) => {
+    const { data, error } = await this.dbInstance!.from("User")
+      .select(`premiumUser`)
+      .eq(`userId`, userId);
+    if (error) this.throwError(error);
+    return data;
+  };
 
-    getBalance: (userId: string) => Promise<any> = async (userId) =>{
-        const {data,error} = await this.dbInstance!
-        .from("User")
-        .select(`balance`)
-        .eq(`userId` , userId)
-        if(error) this.throwError(error)
-        return data;
-    }
+  getBalance: (userId: string) => Promise<any> = async (userId) => {
+    const { data, error } = await this.dbInstance!.from("User")
+      .select(`balance`)
+      .eq(`userId`, userId);
+    if (error) this.throwError(error);
+    return data;
+  };
 
-    getUserId: (authId: string) => Promise<number> = async (authId) => {
-        const { data, error } = await this.dbInstance!.from('User').select(`id`).eq(`Auth`, authId).single();
-        
-        if (error) {
-          this.throwError(error);
-        }
-    
-        if (!data) {
-          throw new Error(`User with authId ${authId} not found.`);
-        }
-    
-        return data.id;
-      };
-    
+  createUserProfile: (userData: BasicData) => Promise<any> = async (
+    userData: BasicData
+  ) => {
+    const { data, error } = await this.dbInstance!.from("User")
+      .insert(userData)
+      .select();
+    console.log(data, error);
+    if (error) this.throwError(error);
+    return data;
+  };
+
+  updateUserBasicInfo: (userData: BasicData, userId: string) => Promise<any> =
+    async (userData: BasicData, authId: string) => {
+      const { data, error } = await this.dbInstance!.from("User")
+        .update(userData)
+        .eq("Auth", authId);
+      console.log(data, error);
+      if (error) this.throwError(error);
+      return data;
+    };
+
+  checkUserExists: (authId: string) => Promise<any> = async (
+    authId: string
+  ) => {
+    const { data, error } = await this.dbInstance!.from("User")
+      .select()
+      .eq("Auth", authId);
+    console.log(data, error);
+    if (error) this.throwError(error);
+    return data;
+  };
+
+  countUserId: () => Promise<any> = async () => {
+    const { count, error } = await this.dbInstance!.from("User").select("*", {
+      count: "exact",
+      head: true,
+    });
+    console.log(count, error);
+    return count;
+  };
 }
 
-export const userDao = new UserDoa()
+export const userDao = new UserDoa();

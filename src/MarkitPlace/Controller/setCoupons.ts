@@ -1,14 +1,15 @@
-import { Controller } from "../../utils/interfaces/controller"
+import { Controller } from "../../utils/interfaces/controller";
 
-import { markitDao } from "../Dao/MarkitDao"
+import { markitDao } from "../Dao/MarkitDao";
 
-export const setCoupon :Controller = async (req,res) =>{
-    try{
-        const coupons = req.body.coupons
-        const data = await markitDao.setCoupon(coupons)
-        res.status(200).json(data)
-    }catch(err:any){
-        console.log(err)
-        res.status(500).json("Server Error")
-    }    
-}
+export const setCoupon: Controller = async (req, res) => {
+  try {
+    const coupon = req.body.coupon;
+    console.log(coupon);
+    const data = await markitDao.setCoupon(coupon);
+    res.status(200).json(data);
+  } catch (err: any) {
+    console.log(err);
+    res.status(500).json("Server Error");
+  }
+};

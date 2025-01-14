@@ -21,7 +21,7 @@ class InventoryDao extends Dao implements DaoType{
         const {data ,error} = await this.dbInstance!
         .from('UserGame')
         .select(` id,Game(gameName) , gameBalance`)
-        .eq(`userId `, userId)
+        .eq(`userId`, userId)
         if(error) this.throwError(error)
         return data;
     }
@@ -45,7 +45,7 @@ class InventoryDao extends Dao implements DaoType{
     }
 
     addToInventory : (coupon: any,userId:string) => Promise<any> = async (coupon , userId) =>{
-        const {data , error} = await this.dbInstance!.from("UserPurchase").insert({userId, ...coupon}).select()
+        const {data , error} = await this.dbInstance!.from("UserPurchases").insert({userId, ...coupon}).select()
         if(error) this.throwError(error)
         return data;
     }

@@ -1,12 +1,21 @@
+import { number } from "zod";
 import { Dao } from "../../Classes/Dao";
 
 interface IFortnite {
-    checkIfReqMeet : (userAchievement : FortniteUptoDate , goals:FortniteUptoDate) => boolean
+    checkIfReqMeet : (userAchievement : FortniteUserData , goals:FortniteUptoDate) => {isCompleted : boolean , percentage : number}
     updateMatchDetails : (matchData : FortniteUserData ,userId :string) => Promise<FortniteUptoDateArray> 
     getDataUptoDate : (start : Date , end: Date , userId : string) => Promise<any>
     calculateTotal : (matches : FortniteUptoDateArray , challenge: FortniteUptoDate) => FortniteUptoDate
     uploadChallenges : (data : any) => Promise<void>
+    uploadProgress : (data : UploadProgress) => Promise<any>
+    getProgressData : (userId : string) => Promise<any>
+    upsertProgress : (progress:UpsertData) => Promise<any> 
 }
+type UpsertData = Array<{requirement : FortniteUserData , userId :string  , challengeId :string ,isCompleted:boolean}>
+type UploadProgress = Array<{requirement : FortniteUserData , userId :string  , challengeId :string}>
+type progress = {requirement : FortniteUserData , userId :string  , challengeId :string , isCompleted:boolean}
+
+type UpsertProgress = Array<{requirement : FortniteUserData , userId :string  , challengeId :string ,id :string}>
 
 export type FortniteUptoDateArray ={
     id : number
@@ -52,43 +61,48 @@ export type FortniteUserData = {
     match_status : boolean,
 }
 
-export type FortniteMatchTotal = {
-    won : FortniteUptoDate
-    loss : FortniteUptoDate
-}
-
 class Fortnite extends Dao implements IFortnite{
     constructor(){
         super()
         if(this.dbInstance === null) this.throwError("DB instance is not present");
     }
 
-    checkIfReqMeet(userAchievement : FortniteUptoDate , goals:FortniteUptoDate):boolean{
+    checkIfReqMeet(userAchievement : FortniteUserData , goals:FortniteUptoDate): {isCompleted : boolean , percentage : number}{
         let achieved =0;
         if(userAchievement.health >= goals.health){
             achieved++
         }
-        else if(userAchievement.knockout >= goals.knockout){
+        if(userAchievement.knockout >= goals.knockout){
             achieved++
         }
-        else if(userAchievement.revived >= goals.revived){
+        if(userAchievement.revived >= goals.revived){
             achieved++
         }
-        else if(userAchievement.kills >= goals.kills){
+        if(userAchievement.kills >= goals.kills){
             achieved++
         }
-        else if(userAchievement.shield >= goals.shield){
+        if(userAchievement.shield >= goals.shield){
             achieved++
         }
-        else if(userAchievement.total_shots >= goals.total_shots){
+        if(userAchievement.total_shots >= goals.total_shots){
             achieved++
         }
 
-        if(achieved === 6) return true;
-        return false;
+        let total : number  =0;
+        let player : number =0;
+
+        player = userAchievement.health + userAchievement.knockout + userAchievement.revived + userAchievement.kills + userAchievement.shield + userAchievement.total_shots
+
+        total = goals.health + goals.knockout + goals.revived + goals.kills + goals.shield + goals.total_shots
+
+        const percentage = (player / total) * 100; 
+        let isCompleted = false;
+        if(achieved === 6) isCompleted =  true;
+        return {isCompleted , percentage};
     } 
 
     async getDataUptoDate(start: Date, end: Date,userId : string){
+        console.log("getDataUptoDate" ,start , end ,userId)
         const {data , error} = await this.dbInstance!.from("fortnite_data").select(
             `id , match_start,match_end,kills,knockout,revived,health,total_shots ,shield,userId ,mode ,match_status`
         )
@@ -108,23 +122,110 @@ class Fortnite extends Dao implements IFortnite{
         const status = challenge.match_status
         const total : FortniteUptoDate = {match_status:status,match_start : "" , match_end: "", id : 0 , userId :"", kills: 0 , knockout : 0 , revived : 0 , health : 0 , total_shots : 0, shield :  0 ,mode:""}
         matches!.forEach((match)=>{
-            if(status === match.match_status){
                 total.health +=  match.health 
                 total.kills += match.kills
                 total.knockout+= match.knockout
                 total.revived += match.revived
                 total.shield += match.shield
                 total.total_shots += match.total_shots
-            }
         })
         return total
     }
     uploadChallenges: (data: any) => Promise<void> = async (data) =>{
-        const res = await this.dbInstance!.from("game_challenges").insert({...data})
+        const res = await this.dbInstance!.from("game_challenges").insert([...data])
         if(res.error) this.throwError(res.error)
         return 
     }
+    
+    async uploadProgress (progress :UploadProgress){
+        const {data ,error} = await this.dbInstance!.from("dota_progress").insert([...progress]).select()
+        if(error) this.throwError(error);
+        return data;
+    }
 
+    async upsertProgress(progress : UpsertData){
+        const challengeIdArray : Array<string> = [] ;
+        const progressMp = new Map<string , progress>();
+        
+        console.log("progress" , progress);
+
+        progress.forEach((pr)=>{
+            const id = pr.challengeId
+            progressMp.set(id , pr);
+            challengeIdArray.push(id.toString());
+        })
+
+        let res ,data ,error
+
+        console.log("challengeArray", progressMp)
+        if(challengeIdArray.length>0){
+            res = await this.dbInstance!!.from("vallorent_progress").select("id , challengeId ,userId , requirement").in("challengeId" ,challengeIdArray );
+            data = res.data;
+            error = res.error
+            if(error) this.throwError(error);
+        }
+            
+        const updateArray: UploadProgress = []
+        const insertArray :UploadProgress = []
+        const deleteArray : Array <string>   = []
+
+        if(data){
+            data.forEach((dt)=>{
+                const id = dt.challengeId;
+                const found = progressMp.get(id);
+                console.log("found",found);
+                if(found){
+                    if(found.isCompleted){
+                        deleteArray.push(dt.id)
+                    }else{
+                        updateArray.push({...dt , requirement :found.requirement });
+                    }
+                    progressMp.delete(id);
+                } 
+            })
+        }
+        
+        progressMp.forEach((val , key)=>{
+            if(!val.isCompleted){
+                const requirement = val.requirement
+                const challengeId = val.challengeId
+                const userId = val.userId
+                insertArray.push({requirement , challengeId , userId});
+            }
+        })
+
+        let update , insert , del ;
+        
+        console.log("hey there what a sudden surprise " , challengeIdArray ,deleteArray , insertArray ,updateArray)
+
+        if(updateArray.length>0) update = this.dbInstance!.from("vallorent_progress").upsert([...updateArray]).select()
+        if(insertArray.length>0) insert = this.dbInstance!.from("vallorent_progress").insert([...insertArray]).select()
+        if(deleteArray.length >0) del = this.dbInstance!.from("vallorent_progress").delete().in("id" , deleteArray)
+        
+        const promiseArray = []
+
+        if(updateArray.length) promiseArray.push(update)
+        if(insertArray.length) promiseArray.push(insert) 
+        if(deleteArray.length) promiseArray.push(del)
+
+        const resp : any = await Promise.all(promiseArray);
+
+        const updatedProgress :Array<any> = []
+        resp.forEach((res : any,i:number)=>{
+            if(res.error) this.throwError(res.error)
+            if(i!= 2)
+            updatedProgress.push(res.data)
+        })
+
+        return updatedProgress
+    }
+
+
+    async getProgressData(userId : string ){
+        const {data,error} = await this.dbInstance!.from("fornite_progress").select("*");
+        if(error) this.throwError(error)
+        return data;
+    }
 }
 
 export const fortnite = new Fortnite()

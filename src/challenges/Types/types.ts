@@ -9,6 +9,7 @@ export type ChallengesInSameGame =  {
     endTime: any;
     type: any;
     name: any;
+    reward : number
 }[] | null
 
 export type ChallengesNotInSameGame = {
@@ -22,6 +23,7 @@ export type ChallengesNotInSameGame = {
     endTime: any;
     type: any;
     name: any;
+    reward : number
 }[] | null
 
 export type OnGoingChallenges = {
@@ -34,11 +36,13 @@ export type OnGoingChallenges = {
     endTime: any;
     type: any;
     name: any;
+    reward : number
 }[] | null
 
-export type CompletedChallenges = {
+export type CompletedChallenges ={
     id: any;
     userId: any;
+    challengeId: any;
     Game: {
         gameName: any;
     }[];

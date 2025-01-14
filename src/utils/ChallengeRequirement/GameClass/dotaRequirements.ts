@@ -2,12 +2,21 @@ import { object } from "zod";
 import { Dao } from "../../Classes/Dao";
 
 interface IDota {
-    checkIfReqMeet : (userAchievement : DotaUptoDateData , goals:DotaUptoDateData) => boolean
+    checkIfReqMeet : (userAchievement : DotaUserData , goals:DotaUptoDateData) => {isCompleted : boolean , percentage : number}
     updateMatchDetails : (matchData : DotaUptoDateData ,userId :string) => Promise<DotaUptoDateDataArray> 
     getDataUptoDate : (start : Date , end: Date , userId :string) => Promise<DotaUptoDateDataArray>
     calculateTotal : (matches : DotaUptoDateDataArray , challenge : DotaUptoDateData) => DotaUptoDateData
     uploadChallenges : (data : any) => Promise<void>
+    uploadProgress : (data : UploadProgress) => Promise<any>
+    getProgressData : (userId : string) => Promise<any>
+    upsertProgress : (progress:UpsertData) => Promise<any>  
 }
+type UpsertData = Array<{requirement : DotaUserData , userId :string  , challengeId :string ,isCompleted:boolean}>
+
+type UploadProgress = Array<{requirement : DotaUserData , userId :string  , challengeId :string}>
+type progress = {requirement : DotaUserData , userId :string  , challengeId :string , isCompleted:boolean}
+
+type UpsertProgress = Array<{requirement : DotaUserData , userId :string  , challengeId :string , id : string}>
 
 export type DotaUptoDateDataArray ={
     id: number;
@@ -18,7 +27,7 @@ export type DotaUptoDateDataArray ={
     death: number;
     creep_score: number;
     physical_damage_dealt_players: number;
-    userId: string;
+    Auth: string;
     match_status : boolean
 }[] | null
 
@@ -32,7 +41,7 @@ export type DotaUptoDateData = {
     death: number;
     creep_score: number;
     physical_damage_dealt_players: number;
-    userId: string;
+    Auth: string;
     match_status : boolean
 }
 
@@ -60,26 +69,33 @@ class Dota extends Dao implements IDota{
         if(this.dbInstance === null) this.throwError("DB instance is not present");
     }
 
-    checkIfReqMeet(userAchievement : DotaUptoDateData , goals:DotaUptoDateData):boolean{
+    checkIfReqMeet(userAchievement : DotaUserData , goals:DotaUptoDateData):{isCompleted : boolean , percentage : number}{
         let achieved = 0;
         if(userAchievement.assists >=  goals.assists){
             achieved ++;
         }
-        else if(userAchievement.creep_score >= goals.creep_score){
+        if(userAchievement.creep_score >= goals.creep_score){
             achieved ++;
         }
-        else if(userAchievement.death >= goals.death) {
+        if(userAchievement.death >= goals.death) {
             achieved ++;
         }
-        else if(userAchievement.kills >= goals.kills){
+        if(userAchievement.kills >= goals.kills){
             achieved ++;
         }
-        else if(userAchievement.physical_damage_dealt_players >= goals.physical_damage_dealt_players){
+        if(userAchievement.physical_damage_dealt_players >= goals.physical_damage_dealt_players){
             achieved ++;
         }
 
-        if(achieved === 5) return true;
-        return false;
+        let total : number = 0;
+        let player : number = 0;
+
+        total = goals.assists + goals.creep_score + goals.death + goals.kills + goals.physical_damage_dealt_players
+        player = userAchievement.assists + userAchievement.creep_score + userAchievement.death + userAchievement.kills + userAchievement.physical_damage_dealt_players
+        let percentage = (player / total ) * 100 ;
+        let isCompleted = false ; 
+        if(achieved === 5) isCompleted = true;
+        return {isCompleted , percentage}
     } 
 
     async updateMatchDetails(matchData: DotaUserData, userId: string) {
@@ -98,13 +114,13 @@ class Dota extends Dao implements IDota{
         death, 
         creep_score, 
         physical_damage_dealt_players,
-        userId,
+        Auth,
         match_status
         `
         )
         .gte("match_start" , start)
         .lte("match_end" ,  end)
-        .eq("userId" , userId)
+        .eq("Auth" , userId)
         if(error) this.throwError(error)
         return data
     }
@@ -114,24 +130,112 @@ class Dota extends Dao implements IDota{
         
         const status = challenge.match_status
         const total : DotaUptoDateData = 
-        {match_status:status,match_start : "" , match_end: "", id : 0 , userId :"",kills : 0  , assists : 0 , death : 0 , creep_score : 0 , physical_damage_dealt_players : 0 }
+        {match_status:status,match_start : "" , match_end: "", id : 0 , Auth :"",kills : 0  , assists : 0 , death : 0 , creep_score : 0 , physical_damage_dealt_players : 0 }
 
         matches!.forEach(match => {
         
-            if(match.match_status === status){
                 total.assists += match.assists
                 total.kills += match.kills
                 total.creep_score += match.creep_score
                 total.death += match.death
                 total.physical_damage_dealt_players += match.physical_damage_dealt_players
-            }
         });
         return total
     }
 
     uploadChallenges: (data: any) => Promise<void> = async (data) =>{
-        const res = await this.dbInstance!.from("game_challenges").insert({...data})
+        const res = await this.dbInstance!.from("game_challenges").insert([...data])
         if(res.error) this.throwError(res.error)
+    }
+
+    async uploadProgress (progress :UploadProgress){
+        const {data ,error} = await this.dbInstance!.from("dota_progress").insert([...progress]).select()
+        if(error) this.throwError(error);
+        return data;
+    }
+
+    async upsertProgress(progress : UpsertData){
+        const challengeIdArray : Array<string> = [] ;
+        const progressMp = new Map<string , progress>();
+        
+        console.log("progress" , progress);
+
+        progress.forEach((pr)=>{
+            const id = pr.challengeId
+            progressMp.set(id , pr);
+            challengeIdArray.push(id.toString());
+        })
+
+        let res ,data ,error
+
+        console.log("challengeArray", progressMp)
+        if(challengeIdArray.length>0){
+            res = await this.dbInstance!!.from("vallorent_progress").select("id , challengeId ,Auth , requirement").in("challengeId" ,challengeIdArray );
+            data = res.data;
+            error = res.error
+            if(error) this.throwError(error);
+        }
+            
+        const updateArray: UploadProgress = []
+        const insertArray :UploadProgress = []
+        const deleteArray : Array <string>   = []
+
+        if(data){
+            data.forEach((dt)=>{
+                const id = dt.challengeId;
+                const found = progressMp.get(id);
+                console.log("found",found);
+                if(found){
+                    if(found.isCompleted){
+                        deleteArray.push(dt.id)
+                    }else{
+                        updateArray.push({...dt , requirement :found.requirement, userId: dt.Auth });
+                    }
+                    progressMp.delete(id);
+                } 
+            })
+        }
+        
+        progressMp.forEach((val , key)=>{
+            if(!val.isCompleted){
+                const requirement = val.requirement
+                const challengeId = val.challengeId
+                const userId = val.userId
+                insertArray.push({requirement , challengeId , userId});
+            }
+        })
+
+        let update , insert , del ;
+        
+        console.log("hey there what a sudden surprise " , challengeIdArray ,deleteArray , insertArray ,updateArray)
+
+        if(updateArray.length>0) update = this.dbInstance!.from("vallorent_progress").upsert([...updateArray]).select()
+        if(insertArray.length>0) insert = this.dbInstance!.from("vallorent_progress").insert([...insertArray]).select()
+        if(deleteArray.length >0) del = this.dbInstance!.from("vallorent_progress").delete().in("id" , deleteArray)
+        
+        const promiseArray = []
+
+        if(updateArray.length) promiseArray.push(update)
+        if(insertArray.length) promiseArray.push(insert) 
+        if(deleteArray.length) promiseArray.push(del)
+
+        const resp : any = await Promise.all(promiseArray);
+
+        const updatedProgress :Array<any> = []
+        resp.forEach((res : any,i:number)=>{
+            if(res.error) this.throwError(res.error)
+            if(i!= 2)
+            updatedProgress.push(res.data)
+        })
+
+        return updatedProgress
+    }
+
+
+    async getProgressData(userId : string ){
+        const {data,error} = await this.dbInstance!.from("dota_progress").select("*");
+        if(error) this.throwError(error)
+        return data;
     }
 }
 
