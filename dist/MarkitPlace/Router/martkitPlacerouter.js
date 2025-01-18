@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.markitPlaceRouter = void 0;
+const express_1 = require("express");
+const getCoupons_1 = require("../Controller/getCoupons");
+const setCoupons_1 = require("../Controller/setCoupons");
+const redeemCoupons_1 = require("../Controller/redeemCoupons");
+const deleteCoupons_1 = require("../Controller/deleteCoupons");
+const editCoupon_1 = require("../Controller/editCoupon");
+exports.markitPlaceRouter = (0, express_1.Router)();
+exports.markitPlaceRouter.post("/set-coupons", setCoupons_1.setCoupon);
+exports.markitPlaceRouter.get("/get-coupons", getCoupons_1.getCoupons);
+exports.markitPlaceRouter.get("/delete-coupon/:couponId", deleteCoupons_1.deleteCoupon);
+exports.markitPlaceRouter.post("/edit-coupon/:id", editCoupon_1.editCoupon);
+exports.markitPlaceRouter.post("/redeem-coupons", redeemCoupons_1.redeemCoupons);

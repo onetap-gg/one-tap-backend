@@ -5,8 +5,8 @@ import { Controller } from '../../utils/interfaces/controller';
 export const getUserIdController: Controller = async (req: Request, res: Response) => {
     const authId: string = req.params.authId; // Adjust according to how you're passing `authId`
     try {
-        const userId = await userDao.getUserId(authId);
-        res.status(200).json({ userId });
+        // const userId = await userDao.getUserId(authId);
+        res.status(200).json({});
     } catch (error: any) {
         console.error(error);
         // Send a more generic message to the client

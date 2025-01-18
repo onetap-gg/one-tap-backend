@@ -9,7 +9,6 @@ import { gamesRouter } from "./Games/Routes/gamesRouter"
 import { inventoryRouter } from "./Inventory/Router/inventoryRouter"
 import { challengesRouter } from "./challenges/Routers/challengesRouter"
 import { markitPlaceRouter } from "./MarkitPlace/Router/martkitPlacerouter"
-import cors from "cors";
 import { OverWolfIdToNativeMapper } from "./utils/Middleware/OverWolfToNativeIdMapper"
 
 const app = express()
