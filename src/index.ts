@@ -1,18 +1,21 @@
-import express, { Response, Request } from "express";
-import helmet from "helmet";
-import hpp from "hpp";
-import { envVariables } from "./utils/envVariables";
-import { userRouter } from "./User/Router/userRouter";
-import { leaderBoardRouter } from "./LeaderBoard/Routers/leaderBoardRouter";
-import { gamesRouter } from "./Games/Routes/gamesRouter";
-import { inventoryRouter } from "./Inventory/Router/inventoryRouter";
-import { challengesRouter } from "./challenges/Routers/challengesRouter";
-import { markitPlaceRouter } from "./MarkitPlace/Router/martkitPlacerouter";
+
+import express , {Response , Request} from "express"
+import helmet from "helmet"
+import cors from "cors"
+import hpp from "hpp"
+import { envVariables } from "./utils/envVariables"
+import { userRouter } from "./User/Router/userRouter"
+import { leaderBoardRouter } from "./LeaderBoard/Routers/leaderBoardRouter"
+import { gamesRouter } from "./Games/Routes/gamesRouter"
+import { inventoryRouter } from "./Inventory/Router/inventoryRouter"
+import { challengesRouter } from "./challenges/Routers/challengesRouter"
+import { markitPlaceRouter } from "./MarkitPlace/Router/martkitPlacerouter"
 import cors from "cors";
 import { OverWolfIdToNativeMapper } from "./utils/Middleware/OverWolfToNativeIdMapper";
 import { subscriptionRouter } from "./subscriptions/Router/subscripitonsRouter";
 
-const app = express();
+const app = express()
+app.use(cors())
 
 app.use(cors());
 app.use(express.json());
