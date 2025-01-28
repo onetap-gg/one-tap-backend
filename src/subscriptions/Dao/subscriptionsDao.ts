@@ -6,7 +6,6 @@ interface SubscriptionsType {
   setSubscription: (subscription: Subscription) => Promise<any>;
   deleteSubscription: (subscription: any) => Promise<any>;
   editSubscription: (subscription: Subscription, id: number) => Promise<any>;
-
 }
 
 class Subscriptions extends Dao implements SubscriptionsType {
@@ -55,17 +54,28 @@ class Subscriptions extends Dao implements SubscriptionsType {
       return data;
     };
 
-    updateExpiredSubscriptions: () => Promise<any> = async () => {
-        const currentTime = new Date().toISOString();
-        const { data, error } = await this.dbInstance!.from("subscriptions")
-            .update({ active: false })
-            .not('endTime', 'is', null)
-            .lt("endTime", currentTime)
-            .eq("active", true)
-            .select();
-        if (error) this.throwError(error);
-        return data;
-    }
+  updateExpiredSubscriptions: () => Promise<any> = async () => {
+    const currentTime = new Date().toISOString();
+    const { data, error } = await this.dbInstance!.from("subscriptions")
+      .update({ active: false })
+      .not("endTime", "is", null)
+      .lt("endTime", currentTime)
+      .eq("active", true)
+      .select();
+    if (error) this.throwError(error);
+    return data;
+  };
+
+  deactivate: (subscriptionId: number) => Promise<any> = async (
+    subscriptionId
+  ) => {
+    const { data, error } = await this.dbInstance!.from("subscriptions")
+      .update({ active: false })
+      .eq("id", subscriptionId)
+      .select();
+    if (error) this.throwError(error);
+    return data;
+  };
 }
 
 export const SubscriptionDao = new Subscriptions();

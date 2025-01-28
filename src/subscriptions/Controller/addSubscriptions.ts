@@ -1,6 +1,6 @@
 import { Controller } from "../../utils/interfaces/controller";
 
-import { SubscriptionDao } from "../Dao/SubscriptionsDao";
+import { SubscriptionDao } from "../Dao/subscriptionsDao";
 
 export const setSubscription: Controller = async (req, res) => {
   try {

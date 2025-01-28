@@ -24,4 +24,4 @@ challengesRouter.post("/upload-challenges", uploadChallenges);
 challengesRouter.get("/get-progress/:gameId/:userId", getProgress);
 challengesRouter.get("/all-data", getAllChallenges);
 challengesRouter.post("/edit-challenge", editChallenge);
-challengesRouter.post("/delete-challenge", deleteChallenge);
+challengesRouter.post("/delete-challenge/:gameId/:challengeId", deleteChallenge);

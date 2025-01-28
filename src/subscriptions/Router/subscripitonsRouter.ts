@@ -4,13 +4,18 @@ import { getSubscriptions } from "../Controller/getSubscriptions";
 import { setSubscription } from "../Controller/addSubscriptions";
 import { deleteSubscription } from "../Controller/deleteSubscriptions";
 import { editSubscription } from "../Controller/editSubscriptions";
+import { deactivateSubscription } from "../Controller/deactivateSubscription";
 
-export const markitPlaceRouter = Router();
+export const subscriptionRouter = Router();
 
-markitPlaceRouter.post("/set-supscriptions", setSubscription);
+subscriptionRouter.post("/set-subscriptions", setSubscription);
 
-markitPlaceRouter.get("/get-supscriptions", getSubscriptions);
+subscriptionRouter.get("/get-subscriptions", getSubscriptions);
 
-markitPlaceRouter.get("/delete-supscription/:supscriptionId", deleteSubscription);
+subscriptionRouter.get("/delete-subscription/:supscriptionId", deleteSubscription);
 
-markitPlaceRouter.post("/edit-supscription/:subscriptionId", editSubscription);
+subscriptionRouter.post("/edit-subscription/:subscriptionId", editSubscription);
+
+subscriptionRouter.get("/deactivate-subscription/:subscriptionId", deactivateSubscription);
+
+
