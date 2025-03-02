@@ -52,75 +52,42 @@ const resolvePromiseBatchWise = async (
 
 export const calculateChallengesCompleted: Controller = async (req, res) => {
   try {
-
-
     const userId = req.body.userId;
     const gameId = req.body.gameId;
     const gameData = req.body.gameData;
     console.log("gameId" ,gameId)
     console.log( "gameData" , gameData)
 
-
     const sameGameChallengesPromise =
-      challengesDao.getChallengesInSameGame(gameId);
+      challengesDao.getNonCompletedChallengesInSameGame(gameId ,userId);
     const notSameGameChallengesPromise =
-      challengesDao.getChallengesNotInSameGame(gameId);
-    const getCompletedChallengesPromise = challengesDao.getCompletedChallenges(
-      gameId,
-      userId,
-    );
-
-    let totalReward = 0;
-
-    const notCompChallSameGame: ChallengesInSameGame = [];
-    const notCompChallNotSameGame: ChallengesNotInSameGame = [];
+      challengesDao.getNonCompletedChallengesInSameGame(gameId ,userId);
+    
+    let notCompChallSameGame: ChallengesInSameGame = [];
+    let notCompChallNotSameGame: ChallengesNotInSameGame = [];
     try {
-      const resolvedPromises = await Promise.all([
+      const resolvedPromises = await Promise.allSettled([
         sameGameChallengesPromise,
         notSameGameChallengesPromise,
-        getCompletedChallengesPromise,
       ]);
-      const sameGameChallenges = resolvedPromises[0];
-      const notSameGameChallenges = resolvedPromises[1];
-      const getCompletedChallenges = resolvedPromises[2];
-
-      console.log("same game challenges" , sameGameChallenges)
-      console.log("not same game Challenge" , notSameGameChallenges)
-      console.log("completed challenges",getCompletedChallenges )
       
-      notSameGameChallenges?.forEach((notSameGame) => {
-        let isPresent = false;
-        getCompletedChallenges?.forEach((completedChallenge) => {
-          const completedChallengeId = completedChallenge.challengeId;
-          if (notSameGame.id === completedChallengeId) {
-            isPresent = true;
-          }
-        });
-        if (!isPresent) notCompChallNotSameGame.push(notSameGame);
-      });
-
-      sameGameChallenges?.forEach((sameGame) => {
-        let isPresent = false;
-        getCompletedChallenges?.forEach((completedChallenge) => {
-          const completedChallengeId = completedChallenge.challengeId;
-          if (sameGame.id === completedChallengeId) {
-            isPresent = true;
-          }
-        });
-        if (!isPresent) notCompChallSameGame.push(sameGame);
-      });
-    } catch (err) {
+      if(resolvedPromises[0].status === "fulfilled")  notCompChallSameGame = resolvedPromises[0].value;
+      if(resolvedPromises[1].status === "fulfilled")  notCompChallNotSameGame = resolvedPromises[1].value;
+      
+    }catch(err){
       console.log(err);
-      console.log("Data Not able to fetch");
     }
 
+    if(notCompChallSameGame === null) notCompChallSameGame = [];
+    if(notCompChallNotSameGame === null) notCompChallNotSameGame = [];
+    
     console.log( "--------------Not completed Challenges ---------------")
     console.log("not completed same game challenge" ,notCompChallSameGame)
     console.log("not completed not same game challenge" , notCompChallNotSameGame)
     console.log("-------------------------------------------------------")
-
+    
+    let totalReward = 0;
     const completedChallenges: Array<any> = [];
-    const completedChallengesServer: Array<any> = [];
 
     const challengeProvider = requirementFactory.getRequirement(Number(gameId));
     const completedChallengeSameGame: Array<completedChallenge> = [];
@@ -139,7 +106,6 @@ export const calculateChallengesCompleted: Controller = async (req, res) => {
       }
     });
 
-
     // console.log("completed challenges same game" ,completedChallengeSameGame)
 
     completedChallengeSameGame.forEach((ch) => {
@@ -157,19 +123,14 @@ export const calculateChallengesCompleted: Controller = async (req, res) => {
 
     // console.log("this is it", notCompChallNotSameGame);
 
+    const getDataUptoDateArgs:any = [];
     notCompChallNotSameGame.forEach((ch) => {
-      const promise = challengeProvider!.getDataUptoDate(
-        ch.startTime,
-        ch.endTime,
-        userId
-      );
-      promiseArrayNotSameGame.push(promise);
+      const startTime = ch.startTime;
+      const endTime = ch.endTime;
+      getDataUptoDateArgs.push({startTime, endTime});
     });
 
-    const matchDetails = await resolvePromiseBatchWise(
-      promiseArrayNotSameGame,
-      3
-    );
+    const matchDetails = await challengeProvider!.getDataUptoDate(getDataUptoDateArgs, userId);
 
     // console.log("MATCH details" , matchDetails);
 
