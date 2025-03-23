@@ -37,6 +37,7 @@ export type OnGoingChallenges = {
     type: any;
     name: any;
     reward : number
+    level: any;
 }[] | null
 
 export type CompletedChallenges ={
@@ -47,4 +48,5 @@ export type CompletedChallenges ={
         gameName: any;
     }[];
     gameId: any;
+    level: any;
 }[] | null

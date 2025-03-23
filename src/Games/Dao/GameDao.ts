@@ -10,7 +10,7 @@ class GameDao extends Dao implements DaoType {
         if(this.dbInstance === null) this.throwError("DB instance is not present");
         const {data ,error} = await this.dbInstance!
             .from("Game")
-            .select(`gameName,gameImage`)
+            .select(`gameName,gameImage,popular`)
         if(error) this.throwError(error)
         return data
     }

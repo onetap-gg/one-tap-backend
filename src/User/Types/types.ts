@@ -7,6 +7,8 @@ export type UserData ={
 export type UserProfileDataArray =  {
     User: {
         userName: any;
+        suspended: any;
+        deleted :  any;
     }[];
     id: any;
     isFav: any;

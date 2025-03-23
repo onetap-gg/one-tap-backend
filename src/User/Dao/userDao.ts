@@ -23,6 +23,7 @@ interface DaoType {
   getIsUserPremium: (userId: string) => Promise<IsPremiumUserType>;
   getBalance: (userId: string) => Promise<Balance>;
   createUserProfile: (userData: BasicData) => Promise<any>;
+  updateCredit: (userId: string) => Promise<any>;
 }
 
 export type Balance =
@@ -63,7 +64,7 @@ class UserDoa extends Dao implements DaoType {
       const { data, error } = await this.dbInstance!.from("UserGame")
         .select(
           `
-            User(userName),
+            User(userName, suspended, deleted),
             id,
             isFav,
             Game(gameName ,gameImage),
@@ -135,6 +136,15 @@ class UserDoa extends Dao implements DaoType {
     });
     console.log(count, error);
     return count;
+  };
+
+  updateCredit: (userId: string) => Promise<any> = async (userId: string) => {
+    const { data, error } = await this.dbInstance!.from("User")
+      .update({ balance: 10})
+      .eq("userId", userId);
+    console.log(data, error);
+    if (error) this.throwError(error);
+    return data;
   };
 }
 

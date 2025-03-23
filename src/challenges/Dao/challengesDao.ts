@@ -114,7 +114,7 @@ class ChallengesDao extends Dao implements DaoType {
       "game_challenges_ongoing_view"
     )
       .select(
-        "id,Game(gameName), requirements , startTime ,endTime ,type, name,reward"
+        "id,Game(gameName), requirements , startTime ,endTime ,type, name,reward, level"
       )
       .eq("gameId", gameId);
     if (error) this.throwError(error);
@@ -126,7 +126,7 @@ class ChallengesDao extends Dao implements DaoType {
     userId: string
   ) => Promise<CompletedChallenges> = async (gameId, userId) => {
     const { data, error } = await this.dbInstance!.from("completed_challenges")
-      .select("id ,userId, challengeId, Game(gameName) , gameId ")
+      .select("id ,userId, challengeId, Game(gameName) , gameId ,level")
       .eq("userId", userId)
       .eq("gameId", gameId);
     if (error) this.throwError(error);
