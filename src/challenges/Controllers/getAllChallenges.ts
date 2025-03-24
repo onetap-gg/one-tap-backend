@@ -9,7 +9,6 @@ export const getAllChallenges:Controller = async (req,res) =>{
             console.log(err)
             res.status(500).json('server Error')
         }
-        res.status(200).json()
     }catch(err){
         res.status(500).json("Server Error")
     }

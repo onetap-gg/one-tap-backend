@@ -8,6 +8,8 @@ import { getProgress } from "../Controllers/getProgress";
 import { getAllChallenges } from "../Controllers/getAllChallenges";
 import { editChallenge } from "../Controllers/editChallenge";
 import { deleteChallenge } from "../Controllers/deleteChallenge";
+import { allOngoingChallenges } from "../Controllers/allOngoingChallenges";
+import { allCompletedChallenges } from "../Controllers/allCompletedChallenges";
 
 export const challengesRouter = Router();
 
@@ -24,4 +26,12 @@ challengesRouter.post("/upload-challenges", uploadChallenges);
 challengesRouter.get("/get-progress/:gameId/:userId", getProgress);
 challengesRouter.get("/all-data", getAllChallenges);
 challengesRouter.post("/edit-challenge", editChallenge);
-challengesRouter.post("/delete-challenge/:gameId/:challengeId", deleteChallenge);
+challengesRouter.post(
+  "/delete-challenge/:gameId/:challengeId",
+  deleteChallenge
+);
+challengesRouter.get("/all-ongoing-challenges", allOngoingChallenges);
+challengesRouter.get(
+  "/all-completed-challenges/:userId",
+  allCompletedChallenges
+);
