@@ -61,6 +61,53 @@ class ChallengesDao extends Dao implements DaoType {
     return data;
   };
 
+  getNonCompletedChallengesInSameGame: (
+    gameId: string,
+    userId: string
+  ) => Promise<any> = async (gameId, userId) => {
+    const { data, error } = await this.dbInstance!.from(
+      "game_challenges_active_insamegame_view"
+    )
+      .select(
+        "id, gameId, Game:gameId(gameName, id), requirements, startTime, endTime, type, name, reward"
+      )
+      .eq("gameId", gameId)
+      .not("id", "in", 
+        this.dbInstance!.from("completed_challenges")
+          .select("challengeId")
+          .eq("gameId", gameId)
+          .eq("userId", userId)
+      );
+  
+    if (error) throw new Error(error.message);
+  
+    return data || [];
+  };
+  
+  getNonCompletedChallengesNotInSameGame: (
+    gameId: string,
+    userId: string
+  ) => Promise<any> = async (gameId, userId) => {
+    const { data, error } = await this.dbInstance!.from(
+      "game_challenges_active_insamegame_view"
+    )
+      .select(
+        "id, gameId, Game:gameId(gameName, id), requirements, startTime, endTime, type, name, reward"
+      )
+      .eq("gameId", gameId)
+      .not("id", "in", 
+        this.dbInstance!.from("completed_challenges")
+          .select("challengeId")
+          .eq("gameId", gameId)
+          .eq("userId", userId)
+      );
+  
+    if (error) throw new Error(error.message); // Proper error handling
+  
+    return data || []; // Return an empty array if no challenges found
+  };
+  
+
   getOngoingChallenges: (gameId: string) => Promise<OnGoingChallenges> = async (
     gameId
   ) => {
@@ -68,7 +115,7 @@ class ChallengesDao extends Dao implements DaoType {
       "game_challenges_ongoing_view"
     )
       .select(
-        "id,Game(gameName), requirements , startTime ,endTime ,type, name,reward"
+        "id,Game(gameName), requirements , startTime ,endTime ,type, name,reward, level"
       )
       .eq("gameId", gameId);
     if (error) this.throwError(error);
@@ -80,7 +127,7 @@ class ChallengesDao extends Dao implements DaoType {
     userId: string
   ) => Promise<CompletedChallenges> = async (gameId, userId) => {
     const { data, error } = await this.dbInstance!.from("completed_challenges")
-      .select("id ,userId, challengeId, Game(gameName) , gameId ")
+      .select("id ,userId, challengeId, Game(gameName) , gameId ,level")
       .eq("userId", userId)
       .eq("gameId", gameId);
     if (error) this.throwError(error);

@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.userRouter = void 0;
+const express_1 = require("express");
+const basicInfo_1 = require("../Controllers/basicInfo");
+const profileData_1 = require("../Controllers/profileData");
+const userIdController_1 = require("../Controllers/userIdController");
+const updateUserBasicInfo_1 = require("../Controllers/updateUserBasicInfo");
+const checkUserExistsController_1 = require("../Controllers/checkUserExistsController");
+const basicInfoAll_1 = require("../Controllers/basicInfoAll");
+exports.userRouter = (0, express_1.Router)();
+exports.userRouter.get("/basic-info/:authId", basicInfo_1.basicInfoController);
+exports.userRouter.get('/:authId', userIdController_1.getUserIdController);
+exports.userRouter.get("/profile-data/:userId", profileData_1.profileInfoController);
+exports.userRouter.post("/profile-data/:authId", updateUserBasicInfo_1.updateProfileInfoController);
+exports.userRouter.get("/check-user-exists/:authId", checkUserExistsController_1.checkUserExistsController);
+exports.userRouter.get("/all/basic-info", basicInfoAll_1.basicInfoAllController);

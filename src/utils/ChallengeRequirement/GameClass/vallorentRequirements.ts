@@ -1,5 +1,11 @@
 import { Dao } from "../../Classes/Dao";
 
+type StartEndPair = { 
+  start: string; 
+  end: string; 
+};
+
+
 interface IVallorent {
   checkIfReqMeet: (
     userAchievement: VallorentUserData,
@@ -10,9 +16,9 @@ interface IVallorent {
     userId: string
   ) => Promise<VallorentUptoDateDataArray>;
   getDataUptoDate: (
-    start: string,
-    end: string,
+    startEndPairs: StartEndPair[],
     userId: string
+    
   ) => Promise<VallorentUptoDateDataArray>;
   calculateTotal: (
     matches: VallorentUptoDateDataArray,
@@ -209,23 +215,31 @@ class Vallorent extends Dao implements IVallorent {
     const { data, error } = await this.dbInstance!.from("valorent_data")
       .insert({ ...matchData, userId })
       .select();
-    if (error) this.throwError(error);
-    return data;
+      return data;
+      if (error) this.throwError(error);
   }
 
-  async getDataUptoDate(start: string, end: string, userId: string) {
-    console.log("hello", start, end, userId);
-    const { data, error } = await this.dbInstance!.from("valorent_data")
-      .select(
-        `id , match_start ,match_end ,total_kills , deaths ,assists ,headshot , spikes_planted ,spikes_defuse , damage_done ,team_scores ,   match_status , agent, region ,game_mode ,damage_taken,userId`
-      )
-      .gte("match_start", start)
-      .lte("match_end", end)
-      .eq("userId", userId);
-    if (error) this.throwError(error);
-    console.log("getDataUptoDate", data);
-    return data;
-  }
+  async getDataUptoDate(startEndPairs: { start: string, end: string }[], userId: string) {
+  console.log("Fetching data for:", startEndPairs, userId);
+
+  // Build OR conditions for all start-end ranges
+  const rangeConditions = startEndPairs
+    .map(({ start, end }) => `(match_start.gte.${start},match_end.lte.${end})`)
+    .join(",");
+
+  const { data, error } = await this.dbInstance!.from("valorent_data")
+    .select(
+      `id , match_start ,match_end ,total_kills , deaths ,assists ,headshot , spikes_planted ,spikes_defuse , damage_done ,team_scores ,match_status , agent , region ,game_mode ,damage_taken,userId`
+    )
+    .or(rangeConditions)
+    .eq("userId", userId);
+
+  if (error) this.throwError(error);
+
+  console.log("getDataUptoDate", data);
+  return data;
+}
+
 
   calculateTotal(
     matches: VallorentUptoDateDataArray,

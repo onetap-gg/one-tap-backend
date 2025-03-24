@@ -1,15 +1,23 @@
 import { object } from "zod";
 import { Dao } from "../../Classes/Dao";
-
+type StartEndPair = { 
+    start: Date; 
+    end: Date; 
+  };
+  
+  type GetDataUptoDateParams = { 
+    
+  };
+  
 interface IDota {
     checkIfReqMeet : (userAchievement : DotaUserData , goals:DotaUptoDateData) => {isCompleted : boolean , percentage : number}
     updateMatchDetails : (matchData : DotaUptoDateData ,userId :string) => Promise<DotaUptoDateDataArray> 
-    getDataUptoDate : (start : Date , end: Date , userId :string) => Promise<DotaUptoDateDataArray>
     calculateTotal : (matches : DotaUptoDateDataArray , challenge : DotaUptoDateData) => DotaUptoDateData
     uploadChallenges : (data : any) => Promise<void>
     uploadProgress : (data : UploadProgress) => Promise<any>
     getProgressData : (userId : string) => Promise<any>
     upsertProgress : (progress:UpsertData) => Promise<any>  
+    getDataUptoDate : (startEndPairs: StartEndPair[], userId: string ) => Promise<any>
 }
 type UpsertData = Array<{requirement : DotaUserData , userId :string  , challengeId :string ,isCompleted:boolean}>
 
@@ -104,26 +112,42 @@ class Dota extends Dao implements IDota{
         return data;
     };
 
-    async getDataUptoDate(start: Date, end: Date,userId : string){
-        const {data , error} = await this.dbInstance!.from("dota_data").select(
-        `id, 
-        match_start,
-        match_end, 
-        kills, 
-        assists,
-        death, 
-        creep_score, 
-        physical_damage_dealt_players,
-        Auth,
-        match_status
-        `
-        )
-        .gte("match_start" , start)
-        .lte("match_end" ,  end)
-        .eq("Auth" , userId)
-        if(error) this.throwError(error)
-        return data
-    }
+    async getDataUptoDate(startEndPairs: StartEndPair[], userId: string) {
+        console.log("Fetching data for:", startEndPairs, "UserId:", userId);
+      
+        // Convert Date objects to ISO strings
+        const formattedRanges = startEndPairs.map(({ start, end }) => ({
+          start: start.toISOString(),
+          end: end.toISOString(),
+        }));
+      
+        // Build OR conditions for all start-end ranges
+        const rangeConditions = formattedRanges
+          .map(({ start, end }) => `(match_start.gte.${start},match_end.lte.${end})`)
+          .join(",");
+      
+        const { data, error } = await this.dbInstance!.from("dota_data")
+          .select(
+            `id, 
+            match_start, 
+            match_end, 
+            kills, 
+            assists, 
+            death, 
+            creep_score, 
+            physical_damage_dealt_players, 
+            Auth, 
+            match_status`
+          )
+          .or(rangeConditions)
+          .eq("Auth", userId);
+      
+        if (error) this.throwError(error);
+      
+        console.log("Fetched Data:", data);
+        return data;
+      }
+      
 
     calculateTotal(matches: DotaUptoDateDataArray ,challenge : DotaUptoDateData){
         

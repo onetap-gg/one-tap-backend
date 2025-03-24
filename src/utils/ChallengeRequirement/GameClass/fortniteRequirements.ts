@@ -1,10 +1,21 @@
 import { number } from "zod";
 import { Dao } from "../../Classes/Dao";
 
+type StartEndPair = { 
+    start: Date; 
+    end: Date; 
+  };
+  
+  type GetDataUptoDateParams = { 
+    startEndPairs: StartEndPair[]; 
+    userId: string; 
+  };
+  
+
 interface IFortnite {
     checkIfReqMeet : (userAchievement : FortniteUserData , goals:FortniteUptoDate) => {isCompleted : boolean , percentage : number}
     updateMatchDetails : (matchData : FortniteUserData ,userId :string) => Promise<FortniteUptoDateArray> 
-    getDataUptoDate : (start : Date , end: Date , userId : string) => Promise<any>
+    getDataUptoDate : (startEndPairs: StartEndPair[],userId: string ) => Promise<any>
     calculateTotal : (matches : FortniteUptoDateArray , challenge: FortniteUptoDate) => FortniteUptoDate
     uploadChallenges : (data : any) => Promise<void>
     uploadProgress : (data : UploadProgress) => Promise<any>
@@ -66,6 +77,27 @@ class Fortnite extends Dao implements IFortnite{
         super()
         if(this.dbInstance === null) this.throwError("DB instance is not present");
     }
+    async getDataUptoDate(startEndPairs: StartEndPair[], userId: string): Promise<any> {
+        const formattedRanges = startEndPairs.map(({ start, end }) => ({
+            start: start.toISOString(),
+            end: end.toISOString(),
+        }));
+
+        const rangeConditions = formattedRanges
+            .map(({ start, end }) => `(match_start.gte.${start},match_end.lte.${end})`)
+            .join(",");
+
+        const { data, error } = await this.dbInstance!.from("fortnite_data")
+            .select(
+                `id, match_start, match_end, kills, knockout, revived, health, total_shots, shield, userId, mode, match_status`
+            )
+            .or(rangeConditions)
+            .eq("userId", userId);
+
+        if (error) this.throwError(error);
+
+        return data;
+    }
 
     checkIfReqMeet(userAchievement : FortniteUserData , goals:FortniteUptoDate): {isCompleted : boolean , percentage : number}{
         let achieved =0;
@@ -100,18 +132,6 @@ class Fortnite extends Dao implements IFortnite{
         if(achieved === 6) isCompleted =  true;
         return {isCompleted , percentage};
     } 
-
-    async getDataUptoDate(start: Date, end: Date,userId : string){
-        console.log("getDataUptoDate" ,start , end ,userId)
-        const {data , error} = await this.dbInstance!.from("fortnite_data").select(
-            `id , match_start,match_end,kills,knockout,revived,health,total_shots ,shield,userId ,mode ,match_status`
-        )
-        .gte("match_start" , start)
-        .lte("match_end" ,  end)
-        .eq("userId" , userId)
-        if(error) this.throwError(error)
-        return data
-    }
 
     async updateMatchDetails(matchData : FortniteUserData ,userId :string){
         const {data , error } = await this.dbInstance!.from("fortnite_data").insert({...matchData,userId}).select()
