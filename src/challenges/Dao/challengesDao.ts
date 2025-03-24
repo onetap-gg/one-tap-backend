@@ -126,7 +126,7 @@ class ChallengesDao extends Dao implements DaoType {
     const { data, error } = await this.dbInstance!.from(
       "game_challenges_ongoing_view"
     ).select(
-      "id,Game(gameName), requirements , startTime ,endTime ,type, name,reward"
+      "id,Game(gameName), requirements , startTime ,endTime ,type, name,reward, level"
     );
     if (error) this.throwError(error);
     return data;
@@ -150,7 +150,7 @@ class ChallengesDao extends Dao implements DaoType {
         "completed_challenges"
       )
         .select(
-          "id ,userId, challengeId, game_challenges(name, reward), Game(gameName) , gameId"
+          "id ,userId, challengeId, game_challenges(name, reward), Game(gameName) , gameId, level"
         )
         .eq("userId", userId);
       if (error) this.throwError(error);
