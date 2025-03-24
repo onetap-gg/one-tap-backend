@@ -178,7 +178,7 @@ class ChallengesDao extends Dao implements DaoType {
       "game_challenges"
     )
       .select(
-        "id,Game(gameName,id), requirements, startTime ,endTime ,type, name ,reward"
+        "id,Game(gameName,id), requirements, startTime ,endTime ,type, name ,reward, level"
       )
     if (error) this.throwError(error);
     return data;
