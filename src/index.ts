@@ -12,7 +12,8 @@ import cors from "cors";
 import { OverWolfIdToNativeMapper } from "./utils/Middleware/OverWolfToNativeIdMapper";
 import { subscriptionRouter } from "./subscriptions/Router/subscripitonsRouter";
 
-const app = express();
+const app = express()
+app.use(cors())
 
 app.use(cors());
 app.use(express.json());
