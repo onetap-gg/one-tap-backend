@@ -5,6 +5,7 @@ import { setCoupon } from "../Controller/setCoupons";
 import { redeemCoupons } from "../Controller/redeemCoupons";
 import { deleteCoupon } from "../Controller/deleteCoupons";
 import { editCoupon } from "../Controller/editCoupon";
+import { countCouponByName } from "../Controller/countCouponByName";
 
 export const markitPlaceRouter = Router();
 
@@ -17,3 +18,5 @@ markitPlaceRouter.get("/delete-coupon/:couponId", deleteCoupon);
 markitPlaceRouter.post("/edit-coupon/:id", editCoupon);
 
 markitPlaceRouter.post("/redeem-coupons", redeemCoupons);
+
+markitPlaceRouter.get("/coupon-count-by-game", countCouponByName);

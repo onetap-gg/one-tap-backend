@@ -19,6 +19,14 @@ class MarkitDao extends Dao implements IMarkit {
     return data;
   };
 
+  getCouponById: (couponId: string) => Promise<any> = async (couponId) => {
+    const { data, error } = await this.dbInstance!.from("marketplace")
+      .select()
+      .eq("coupon_id", couponId);
+    if (error) this.throwError(error);
+    return data;
+  };
+
   deleteCoupon: (couponsId: string) => Promise<any> = async (couponId) => {
     const response = await this.dbInstance!.from("marketplace")
       .delete()
@@ -46,6 +54,20 @@ class MarkitDao extends Dao implements IMarkit {
       .eq("id", id)
       .select();
     if (error) this.throwError(error);
+    return data;
+  };
+
+  couponCountByGame: () => Promise<any> = async () => {
+    const { data, error } = await this.dbInstance!.rpc(
+      "count_coupons_per_game"
+    );
+
+    if (error) {
+      console.error("Error fetching coupon count:", error);
+      return;
+    }
+
+    console.log("Coupon count by game:", data);
     return data;
   };
 }
