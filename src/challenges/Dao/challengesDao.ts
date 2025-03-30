@@ -196,12 +196,12 @@ class ChallengesDao extends Dao implements DaoType {
     return res.data.balance;
   };
 
-  getAllChallenges: () => Promise<OnGoingChallenges> = async () => {
+  getAllChallenges: () => Promise<any> = async () => {
     const { data, error } = await this.dbInstance!.from(
       "game_challenges"
     )
       .select(
-        "id,Game(gameName,id), requirements, startTime ,endTime ,type, name ,reward, level"
+        "id, gameId, challangeId, requirements, startTime ,endTime ,type, name ,reward, level"
       )
     if (error) this.throwError(error);
     return data;
