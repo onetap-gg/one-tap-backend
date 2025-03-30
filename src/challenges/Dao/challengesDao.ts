@@ -25,7 +25,7 @@ interface DaoType {
     completed: updateCompletedChallenges
   ) => Promise<any>;
   updateTotalCoins: (userId: string, coins: number) => Promise<any>;
-  getAllChallenges: () => Promise<OnGoingChallenges>;
+  getAllChallenges: () => Promise<any[]>;
 }
 
 class ChallengesDao extends Dao implements DaoType {
