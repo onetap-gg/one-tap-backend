@@ -39,28 +39,29 @@ class UserDoa extends Dao implements DaoType {
   }
 
   getUserBasicInfo: (authId: string) => Promise<UserData> = async (authId) => {
+    this.logMethodCall("getUserBasicInfo", { authId });
     const { data, error } = await this.dbInstance!.from("User")
       .select()
       .eq("Auth", authId)
       .single();
 
-    console.log(data, error);
-
     if (error) this.throwError(error);
+    this.logMethodResult("getUserBasicInfo", data);
     return data;
   };
 
   getUserBasicInfoAll: () => Promise<any> = async () => {
+    this.logMethodCall("getUserBasicInfoAll");
     const { data, error } = await this.dbInstance!.from("User").select();
 
-    console.log(data, error);
-
     if (error) this.throwError(error);
+    this.logMethodResult("getUserBasicInfoAll", data);
     return data;
   };
 
   getUserProfileData: (userId: string) => Promise<UserProfileDataArray> =
     async (userId) => {
+      this.logMethodCall("getUserProfileData", { userId });
       const { data, error } = await this.dbInstance!.from("UserGame")
         .select(
           `
@@ -76,74 +77,85 @@ class UserDoa extends Dao implements DaoType {
         )
         .eq(`userId`, userId);
       if (error) this.throwError(error);
+      this.logMethodResult("getUserProfileData", data);
       return data;
     };
 
   getIsUserPremium: (userId: string) => Promise<IsPremiumUserType> = async (
     userId
   ) => {
+    this.logMethodCall("getIsUserPremium", { userId });
     const { data, error } = await this.dbInstance!.from("User")
       .select(`premiumUser`)
       .eq(`userId`, userId);
     if (error) this.throwError(error);
+    this.logMethodResult("getIsUserPremium", data);
     return data;
   };
 
   getBalance: (userId: string) => Promise<any> = async (userId) => {
+    this.logMethodCall("getBalance", { userId });
     const { data, error } = await this.dbInstance!.from("User")
       .select(`balance`)
       .eq(`userId`, userId);
     if (error) this.throwError(error);
+    this.logMethodResult("getBalance", data);
     return data;
   };
 
   createUserProfile: (userData: BasicData) => Promise<any> = async (
     userData: BasicData
   ) => {
+    this.logMethodCall("createUserProfile", { userData });
     const { data, error } = await this.dbInstance!.from("User")
       .insert(userData)
       .select();
-    console.log(data, error);
     if (error) this.throwError(error);
+    this.logMethodResult("createUserProfile", data);
     return data;
   };
 
   updateUserBasicInfo: (userData: BasicData, userId: string) => Promise<any> =
     async (userData: BasicData, authId: string) => {
+      this.logMethodCall("updateUserBasicInfo", { userData, authId });
       const { data, error } = await this.dbInstance!.from("User")
         .update(userData)
         .eq("Auth", authId);
-      console.log(data, error);
       if (error) this.throwError(error);
+      this.logMethodResult("updateUserBasicInfo", data);
       return data;
     };
 
   checkUserExists: (authId: string) => Promise<any> = async (
     authId: string
   ) => {
+    this.logMethodCall("checkUserExists", { authId });
     const { data, error } = await this.dbInstance!.from("User")
       .select()
       .eq("Auth", authId);
-    console.log(data, error);
     if (error) this.throwError(error);
+    this.logMethodResult("checkUserExists", data);
     return data;
   };
 
   countUserId: () => Promise<any> = async () => {
+    this.logMethodCall("countUserId");
     const { count, error } = await this.dbInstance!.from("User").select("*", {
       count: "exact",
       head: true,
     });
-    console.log(count, error);
+    if (error) this.throwError(error);
+    this.logMethodResult("countUserId", count);
     return count;
   };
 
   updateCredit: (userId: string) => Promise<any> = async (userId: string) => {
+    this.logMethodCall("updateCredit", { userId });
     const { data, error } = await this.dbInstance!.from("User")
-      .update({ balance: 10})
+      .update({ balance: 10 })
       .eq("userId", userId);
-    console.log(data, error);
     if (error) this.throwError(error);
+    this.logMethodResult("updateCredit", data);
     return data;
   };
 }

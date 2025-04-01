@@ -14,33 +14,41 @@ class MarkitDao extends Dao implements IMarkit {
   }
 
   getCoupons: () => Promise<any> = async () => {
+    this.logMethodCall("getCoupons");
     const { data, error } = await this.dbInstance!.from("marketplace").select();
     if (error) this.throwError(error);
+    this.logMethodResult("getCoupons", data);
     return data;
   };
 
   getCouponById: (couponId: string) => Promise<any> = async (couponId) => {
+    this.logMethodCall("getCouponById", { couponId });
     const { data, error } = await this.dbInstance!.from("marketplace")
       .select()
       .eq("coupon_id", couponId);
     if (error) this.throwError(error);
+    this.logMethodResult("getCouponById", data);
     return data;
   };
 
   deleteCoupon: (couponsId: string) => Promise<any> = async (couponId) => {
+    this.logMethodCall("deleteCoupon", { couponId });
     const response = await this.dbInstance!.from("marketplace")
       .delete()
       .eq("coupon_id", couponId);
-    if (response.status === 204) return response;
-    else this.throwError("COUPON NOT FOUND");
+    if (response.status === 204) {
+      this.logMethodResult("deleteCoupon", "Successfully deleted");
+      return response;
+    } else this.throwError("COUPON NOT FOUND");
   };
 
   setCoupon: (coupon: Coupon) => Promise<any> = async (coupon) => {
-    console.log(coupon);
+    this.logMethodCall("setCoupon", { coupon });
     const { data, error } = await this.dbInstance!.from("marketplace")
       .insert({ ...coupon })
       .select();
     if (error) this.throwError(error);
+    this.logMethodResult("setCoupon", data);
     return data;
   };
 
@@ -48,26 +56,28 @@ class MarkitDao extends Dao implements IMarkit {
     coupon,
     id
   ) => {
-    console.log(coupon);
+    this.logMethodCall("editCoupon", { coupon, id });
     const { data, error } = await this.dbInstance!.from("marketplace")
       .update({ ...coupon })
       .eq("id", id)
       .select();
     if (error) this.throwError(error);
+    this.logMethodResult("editCoupon", data);
     return data;
   };
 
   couponCountByGame: () => Promise<any> = async () => {
+    this.logMethodCall("couponCountByGame");
     const { data, error } = await this.dbInstance!.rpc(
       "count_coupons_per_game"
     );
 
     if (error) {
-      console.error("Error fetching coupon count:", error);
+      this.throwError(error);
       return;
     }
 
-    console.log("Coupon count by game:", data);
+    this.logMethodResult("couponCountByGame", data);
     return data;
   };
 }
