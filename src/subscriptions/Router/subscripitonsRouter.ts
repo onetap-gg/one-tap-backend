@@ -12,7 +12,7 @@ subscriptionRouter.post("/set-subscriptions", setSubscription);
 
 subscriptionRouter.get("/get-subscriptions", getSubscriptions);
 
-subscriptionRouter.get("/delete-subscription/:supscriptionId", deleteSubscription);
+subscriptionRouter.get("/delete-subscription/:subscriptionId", deleteSubscription);
 
 subscriptionRouter.post("/edit-subscription/:subscriptionId", editSubscription);
 

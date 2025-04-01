@@ -22,12 +22,13 @@ class Subscriptions extends Dao implements SubscriptionsType {
     return data;
   };
 
-  deleteSubscription: (subscriptionId: string) => Promise<any> = async (
+  deleteSubscription: (subscriptionId: number) => Promise<any> = async (
     subscriptionId
   ) => {
     const response = await this.dbInstance!.from("subscriptions")
       .delete()
       .eq("id", subscriptionId);
+    console.log(response);
     if (response.status === 204) return response;
     else this.throwError("SUBSCRIPTION NOT FOUND");
   };
@@ -36,7 +37,7 @@ class Subscriptions extends Dao implements SubscriptionsType {
     subscription
   ) => {
     console.log(subscription);
-    const { data, error } = await this.dbInstance!.from("subscription")
+    const { data, error } = await this.dbInstance!.from("subscriptions")
       .insert({ ...subscription })
       .select();
     if (error) this.throwError(error);
@@ -46,7 +47,7 @@ class Subscriptions extends Dao implements SubscriptionsType {
   editSubscription: (subscription: Subscription, id: number) => Promise<any> =
     async (subscription, id) => {
       console.log(subscription);
-      const { data, error } = await this.dbInstance!.from("subscription")
+      const { data, error } = await this.dbInstance!.from("subscriptions")
         .update({ ...subscription })
         .eq("id", id)
         .select();
