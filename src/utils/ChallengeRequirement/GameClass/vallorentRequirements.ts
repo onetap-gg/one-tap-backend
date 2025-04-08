@@ -1,10 +1,9 @@
 import { Dao } from "../../Classes/Dao";
 
-type StartEndPair = { 
-  start: string; 
-  end: string; 
+type StartEndPair = {
+  start: string;
+  end: string;
 };
-
 
 interface IVallorent {
   checkIfReqMeet: (
@@ -16,9 +15,8 @@ interface IVallorent {
     userId: string
   ) => Promise<VallorentUptoDateDataArray>;
   getDataUptoDate: (
-    startEndPairs: StartEndPair[],
+    startEndPairs: { startTime: string; endTime: string }[],
     userId: string
-    
   ) => Promise<VallorentUptoDateDataArray>;
   calculateTotal: (
     matches: VallorentUptoDateDataArray,
@@ -41,6 +39,7 @@ type UploadProgress = Array<{
   requirement: VallorentUserData;
   userId: string;
   challengeId: string;
+  isCompleted?: boolean;
 }>;
 type progress = {
   requirement: VallorentUserData;
@@ -128,86 +127,212 @@ class Vallorent extends Dao implements IVallorent {
     goal: VallorentUptoDateData
   ) {
     console.log(
-      "--------------------checking if challenge is completed------------------"
+      "\n================================================================="
     );
-    console.log("user achievement", userAchievement);
-    console.log("goal", goal);
+    console.log("🎯 CHALLENGE REQUIREMENT CHECK");
+    console.log(
+      "================================================================="
+    );
 
-    if (userAchievement === null) this.throwError("Null object");
+    if (userAchievement === null) {
+      console.error("❌ Error: User achievement data is null");
+      this.throwError("Null object");
+    }
+
+    console.log("\n📊 User Achievement Data:");
+    console.log(JSON.stringify(userAchievement, null, 2));
+    console.log("\n🎯 Challenge Goal Data:");
+    console.log(JSON.stringify(goal, null, 2));
+
     let achieved = 0;
-    if (userAchievement.assists >= goal.assists) {
-      achieved++;
-      console.log(1);
-    }
-    if (userAchievement.damage_done >= goal.damage_done) {
-      achieved++;
-      console.log(2);
-    }
-    if (
-      userAchievement.damage_taken != null &&
-      userAchievement.damage_taken >= goal.damage_taken
-    ) {
-      achieved++;
-      console.log(3);
-    }
-    if (userAchievement.deaths >= goal.deaths) {
-      achieved++;
-      console.log(4);
-    }
-    if (userAchievement.headshot >= goal.headshot) {
-      achieved++;
-      console.log(5);
-    }
-    if (userAchievement.spikes_defuse >= goal.spikes_defuse) {
-      achieved++;
-      console.log(6);
-    }
-    if (userAchievement.spikes_planted >= goal.spikes_planted) {
-      achieved++;
-      console.log(7);
-    }
-    if (userAchievement.team_scores >= goal.team_scores) {
-      achieved++;
-      console.log(8);
-    }
-    if (userAchievement.total_kills >= goal.total_kills) {
-      achieved++;
-      console.log(9);
-    }
-    let total: number = 0;
-    let player: number = 0;
-    console.log("amount of match property", achieved);
-    total =
-      goal.assists +
-      goal.damage_done +
-      goal.damage_taken +
-      goal.deaths +
-      goal.headshot +
-      goal.spikes_defuse +
-      goal.spikes_planted +
-      goal.team_scores +
-      goal.total_kills;
+    let totalChecks = 0;
 
-    player =
-      userAchievement.assists +
-      userAchievement.damage_done +
-      userAchievement.damage_taken +
-      userAchievement.deaths +
-      userAchievement.headshot +
-      userAchievement.spikes_defuse +
-      userAchievement.spikes_planted +
-      userAchievement.team_scores +
-      userAchievement.total_kills;
-    console.log("player", player);
-    console.log("total", total);
-    let percentage: number = (player / total) * 100;
+    // Default values object
+    const defaultValues = {
+      total_kills: 0,
+      deaths: 0,
+      assists: 0,
+      headshot: 0,
+      spikes_defuse: 0,
+      spikes_planted: 0,
+      damage_done: 0,
+      team_scores: 0,
+      damage_taken: 0,
+      agent: "",
+      region: "",
+      game_mode: "",
+      match_status: false,
+    };
 
-    let isCompleted = false;
-    if (achieved === 9) isCompleted = true;
+    console.log("\n📋 Default Values Reference:");
+    console.log(JSON.stringify(defaultValues, null, 2));
+    console.log("\n🔍 Starting Requirement Checks...");
 
-    console.log("is completed", isCompleted);
-    console.log("percentage", percentage);
-    console.log("------------------------------------------------------------");
+    // Only check metrics that are different from default values
+    if (goal.total_kills !== defaultValues.total_kills) {
+      totalChecks++;
+      console.log("\n⚔️ Checking Total Kills:");
+      console.log(`Required: ${goal.total_kills}`);
+      console.log(`Achieved: ${userAchievement.total_kills}`);
+      if (userAchievement.total_kills >= goal.total_kills) {
+        achieved++;
+        console.log("✅ Total kills requirement met!");
+      } else {
+        console.log("❌ Total kills requirement not met");
+      }
+    }
+    if (goal.deaths !== defaultValues.deaths) {
+      totalChecks++;
+      console.log(
+        `Checking deaths: User has ${userAchievement.deaths}, need ${goal.deaths}`
+      );
+      if (userAchievement.deaths >= goal.deaths) {
+        achieved++;
+        console.log("✓ Deaths requirement met!");
+      } else {
+        console.log("✗ Deaths requirement not met");
+      }
+    }
+    if (goal.assists !== defaultValues.assists) {
+      totalChecks++;
+      console.log(
+        `Checking assists: User has ${userAchievement.assists}, need ${goal.assists}`
+      );
+      if (userAchievement.assists >= goal.assists) {
+        achieved++;
+        console.log("✓ Assists requirement met!");
+      } else {
+        console.log("✗ Assists requirement not met");
+      }
+    }
+    if (goal.headshot !== defaultValues.headshot) {
+      totalChecks++;
+      console.log(
+        `Checking headshots: User has ${userAchievement.headshot}, need ${goal.headshot}`
+      );
+      if (userAchievement.headshot >= goal.headshot) {
+        achieved++;
+        console.log("✓ Headshots requirement met!");
+      } else {
+        console.log("✗ Headshots requirement not met");
+      }
+    }
+    if (goal.spikes_defuse !== defaultValues.spikes_defuse) {
+      totalChecks++;
+      console.log(
+        `Checking spike defuses: User has ${userAchievement.spikes_defuse}, need ${goal.spikes_defuse}`
+      );
+      if (userAchievement.spikes_defuse >= goal.spikes_defuse) {
+        achieved++;
+        console.log("✓ Spike defuses requirement met!");
+      } else {
+        console.log("✗ Spike defuses requirement not met");
+      }
+    }
+    if (goal.spikes_planted !== defaultValues.spikes_planted) {
+      totalChecks++;
+      console.log(
+        `Checking spikes planted: User has ${userAchievement.spikes_planted}, need ${goal.spikes_planted}`
+      );
+      if (userAchievement.spikes_planted >= goal.spikes_planted) {
+        achieved++;
+        console.log("✓ Spikes planted requirement met!");
+      } else {
+        console.log("✗ Spikes planted requirement not met");
+      }
+    }
+    if (goal.damage_done !== defaultValues.damage_done) {
+      totalChecks++;
+      console.log(
+        `Checking damage done: User has ${userAchievement.damage_done}, need ${goal.damage_done}`
+      );
+      if (userAchievement.damage_done >= goal.damage_done) {
+        achieved++;
+        console.log("✓ Damage done requirement met!");
+      } else {
+        console.log("✗ Damage done requirement not met");
+      }
+    }
+    if (goal.team_scores !== defaultValues.team_scores) {
+      totalChecks++;
+      console.log(
+        `Checking team scores: User has ${userAchievement.team_scores}, need ${goal.team_scores}`
+      );
+      if (userAchievement.team_scores >= goal.team_scores) {
+        achieved++;
+        console.log("✓ Team scores requirement met!");
+      } else {
+        console.log("✗ Team scores requirement not met");
+      }
+    }
+    if (goal.damage_taken !== defaultValues.damage_taken) {
+      totalChecks++;
+      console.log(
+        `Checking damage taken: User has ${userAchievement.damage_taken}, need ${goal.damage_taken}`
+      );
+      if (userAchievement.damage_taken >= goal.damage_taken) {
+        achieved++;
+        console.log("✓ Damage taken requirement met!");
+      } else {
+        console.log("✗ Damage taken requirement not met");
+      }
+    }
+
+    // Calculate percentage based on actual requirements
+    let total = 0;
+    let player = 0;
+
+    if (goal.total_kills !== defaultValues.total_kills) {
+      total += goal.total_kills;
+      player += Math.min(userAchievement.total_kills, goal.total_kills);
+    }
+    if (goal.deaths !== defaultValues.deaths) {
+      total += goal.deaths;
+      player += Math.min(userAchievement.deaths, goal.deaths);
+    }
+    if (goal.assists !== defaultValues.assists) {
+      total += goal.assists;
+      player += Math.min(userAchievement.assists, goal.assists);
+    }
+    if (goal.headshot !== defaultValues.headshot) {
+      total += goal.headshot;
+      player += Math.min(userAchievement.headshot, goal.headshot);
+    }
+    if (goal.spikes_defuse !== defaultValues.spikes_defuse) {
+      total += goal.spikes_defuse;
+      player += Math.min(userAchievement.spikes_defuse, goal.spikes_defuse);
+    }
+    if (goal.spikes_planted !== defaultValues.spikes_planted) {
+      total += goal.spikes_planted;
+      player += Math.min(userAchievement.spikes_planted, goal.spikes_planted);
+    }
+    if (goal.damage_done !== defaultValues.damage_done) {
+      total += goal.damage_done;
+      player += Math.min(userAchievement.damage_done, goal.damage_done);
+    }
+    if (goal.team_scores !== defaultValues.team_scores) {
+      total += goal.team_scores;
+      player += Math.min(userAchievement.team_scores, goal.team_scores);
+    }
+    if (goal.damage_taken !== defaultValues.damage_taken) {
+      total += goal.damage_taken;
+      player += Math.min(userAchievement.damage_taken, goal.damage_taken);
+    }
+
+    let percentage = total > 0 ? (player / total) * 100 : 100;
+    let isCompleted = totalChecks === 0 || achieved === totalChecks;
+
+    console.log("\n📈 Challenge Summary:");
+    console.log(`Total requirements to check: ${totalChecks}`);
+    console.log(`Requirements achieved: ${achieved}`);
+    console.log(
+      `Completion status: ${isCompleted ? "✅ COMPLETED" : "❌ NOT COMPLETED"}`
+    );
+    console.log(`Progress: ${percentage.toFixed(2)}%`);
+    console.log(
+      "=================================================================\n"
+    );
+
     return { isCompleted, percentage };
   }
 
@@ -215,38 +340,59 @@ class Vallorent extends Dao implements IVallorent {
     const { data, error } = await this.dbInstance!.from("valorent_data")
       .insert({ ...matchData, userId })
       .select();
-      return data;
-      if (error) this.throwError(error);
+    return data;
+    if (error) this.throwError(error);
   }
 
-  async getDataUptoDate(startEndPairs: { start: string, end: string }[], userId: string) {
-  console.log("Fetching data for:", startEndPairs, userId);
+  async getDataUptoDate(
+    startEndPairs: { startTime: string; endTime: string }[],
+    userId: string
+  ) {
+    console.log("Fetching data for:", startEndPairs, userId);
 
-  // Build OR conditions for all start-end ranges
-  const rangeConditions = startEndPairs
-    .map(({ start, end }) => `(match_start.gte.${start},match_end.lte.${end})`)
-    .join(",");
+    if (startEndPairs.length === 0) {
+      return [];
+    }
 
-  const { data, error } = await this.dbInstance!.from("valorent_data")
-    .select(
-      `id , match_start ,match_end ,total_kills , deaths ,assists ,headshot , spikes_planted ,spikes_defuse , damage_done ,team_scores ,match_status , agent , region ,game_mode ,damage_taken,userId`
-    )
-    .or(rangeConditions)
-    .eq("userId", userId);
+    // Create a query to get matches within any of the time ranges
+    const { data, error } = await this.dbInstance!.from("valorent_data")
+      .select(
+        `id, match_start, match_end, total_kills, deaths, assists, headshot, 
+        spikes_planted, spikes_defuse, damage_done, team_scores, match_status, 
+        agent, region, game_mode, damage_taken, userId`
+      )
+      .eq("userId", userId)
+      .or(
+        startEndPairs
+          .map(
+            (pair) =>
+              `and(match_start.gte.${pair.startTime},match_end.lte.${pair.endTime})`
+          )
+          .join(",")
+      );
 
-  if (error) this.throwError(error);
+    if (error) this.throwError(error);
 
-  console.log("getDataUptoDate", data);
-  return data;
-}
-
+    console.log("getDataUptoDate result:", data);
+    return data || [];
+  }
 
   calculateTotal(
     matches: VallorentUptoDateDataArray,
     challenge: VallorentUptoDateData
   ) {
-    console.log("----------------------calculateTotal------------------------");
-    console.log();
+    console.log(
+      "\n================================================================="
+    );
+    console.log("📊 CALCULATING MATCH TOTALS");
+    console.log(
+      "================================================================="
+    );
+
+    console.log("\n🎮 Input Matches Data:");
+    console.log(JSON.stringify(matches, null, 2));
+    console.log("\n🎯 Challenge Data:");
+    console.log(JSON.stringify(challenge, null, 2));
 
     const status = challenge.match_status;
     const total: VallorentUptoDateData = {
@@ -269,17 +415,46 @@ class Vallorent extends Dao implements IVallorent {
       userId: "",
     };
 
-    matches!.forEach((match) => {
-      total.assists += match.assists;
-      total.damage_done += match.damage_done;
-      total.damage_taken += match.damage_taken;
-      total.deaths += match.deaths;
-      total.headshot += match.headshot;
-      total.spikes_defuse += match.spikes_defuse;
-      total.spikes_planted += match.spikes_planted;
-      total.team_scores += match.team_scores;
-      total.total_kills += match.total_kills;
+    // Ensure matches is always an array
+    const matchesArray = matches
+      ? Array.isArray(matches)
+        ? matches
+        : [matches]
+      : [];
+    console.log(
+      "\n🔄 Processing matches:",
+      matchesArray.length,
+      "match(es) found"
+    );
+
+    // Process each match and accumulate totals
+    matchesArray.forEach((match, index) => {
+      if (!match) {
+        console.log(`⚠️ Skipping null match at index ${index}`);
+        return;
+      }
+      console.log(`\n📝 Processing match ${index + 1}:`);
+      console.log(`Kills: ${match.total_kills}`);
+      console.log(`Deaths: ${match.deaths}`);
+      console.log(`Assists: ${match.assists}`);
+
+      // Add match stats to totals
+      total.assists += Number(match.assists) || 0;
+      total.damage_done += Number(match.damage_done) || 0;
+      total.damage_taken += Number(match.damage_taken) || 0;
+      total.deaths += Number(match.deaths) || 0;
+      total.headshot += Number(match.headshot) || 0;
+      total.spikes_defuse += Number(match.spikes_defuse) || 0;
+      total.spikes_planted += Number(match.spikes_planted) || 0;
+      total.team_scores += Number(match.team_scores) || 0;
+      total.total_kills += Number(match.total_kills) || 0;
     });
+
+    console.log("\n📊 Final Totals:");
+    console.log(JSON.stringify(total, null, 2));
+    console.log(
+      "=================================================================\n"
+    );
 
     return total;
   }
@@ -311,96 +486,119 @@ class Vallorent extends Dao implements IVallorent {
   }
 
   async upsertProgress(progress: UpsertData) {
-    const challengeIdArray: Array<string> = [];
-    const progressMp = new Map<string, progress>();
+    try {
+      const challengeIdArray: Array<string> = [];
+      const progressMp = new Map<string, progress>();
 
-    console.log("progress from upsert progress", progress);
+      console.log("progress from upsert progress", progress);
 
-    progress.forEach((pr) => {
-      const id = pr.challengeId;
-      progressMp.set(id, pr);
-      challengeIdArray.push(id.toString());
-    });
-
-    let res, data, error;
-
-    console.log("challengeArray", progressMp);
-    if (challengeIdArray.length > 0) {
-      res = await this.dbInstance!!.from("vallorent_progress")
-        .select("id , challengeId ,userId , requirement")
-        .in("challengeId", challengeIdArray);
-      data = res.data;
-      error = res.error;
-      if (error) this.throwError(error);
-    }
-
-    const updateArray: UploadProgress = [];
-    const insertArray: UploadProgress = [];
-    const deleteArray: Array<string> = [];
-
-    if (data) {
-      console.log("data from vallorent_progress: ", data);
-      data.forEach((dt) => {
-        const id = dt.challengeId;
-        const found = progressMp.get(id);
-        console.log("found", found);
-        if (found) {
-          if (found.isCompleted) {
-            deleteArray.push(dt.id);
-          } else {
-            updateArray.push({ ...dt, requirement: found.requirement });
-          }
-          progressMp.delete(id);
-        }
+      progress.forEach((pr) => {
+        const id = pr.challengeId;
+        progressMp.set(id, pr);
+        challengeIdArray.push(id.toString());
       });
-    }
 
-    progressMp.forEach((val, key) => {
-      if (!val.isCompleted) {
+      let res, data, error;
+
+      console.log("challengeArray", progressMp);
+      if (challengeIdArray.length > 0) {
+        res = await this.dbInstance!!.from("vallorent_progress")
+          .select("id , challengeId ,userId , requirement")
+          .in("challengeId", challengeIdArray);
+        data = res.data;
+        error = res.error;
+        if (error) {
+          console.error("Error fetching existing progress:", error);
+          this.throwError(error);
+        }
+      }
+
+      const updateArray: UploadProgress = [];
+      const insertArray: UploadProgress = [];
+      const deleteArray: Array<string> = [];
+
+      if (data) {
+        console.log("data from vallorent_progress: ", data);
+        data.forEach((dt) => {
+          const id = dt.challengeId;
+          const found = progressMp.get(id);
+          console.log("found", found);
+          if (found) {
+            if (found.isCompleted) {
+              updateArray.push({
+                ...dt,
+                requirement: found.requirement,
+              });
+            } else {
+              updateArray.push({ ...dt, requirement: found.requirement });
+            }
+            progressMp.delete(id);
+          }
+        });
+      }
+
+      progressMp.forEach((val, key) => {
         const requirement = val.requirement;
         const challengeId = val.challengeId;
         const userId = val.userId;
-        insertArray.push({ requirement, challengeId, userId });
+        insertArray.push({
+          requirement,
+          challengeId,
+          userId,
+        });
+      });
+
+      let update, insert, del;
+
+      console.log(
+        "Database operations to perform:",
+        "\nUpdates:",
+        updateArray,
+        "\nInserts:",
+        insertArray,
+        "\nDeletes:",
+        deleteArray
+      );
+
+      if (updateArray.length > 0) {
+        update = this.dbInstance!.from("vallorent_progress")
+          .upsert([...updateArray])
+          .select();
       }
-    });
+      if (insertArray.length > 0) {
+        insert = this.dbInstance!.from("vallorent_progress")
+          .insert([...insertArray])
+          .select();
+      }
+      if (deleteArray.length > 0) {
+        del = this.dbInstance!.from("vallorent_progress")
+          .delete()
+          .in("id", deleteArray);
+      }
 
-    let update, insert, del;
+      const promiseArray = [];
 
-    console.log(
-      "hey there what a sudden surprise ",
-      challengeIdArray,
-      deleteArray,
-      insertArray,
-      updateArray
-    );
+      if (updateArray.length) promiseArray.push(update);
+      if (insertArray.length) promiseArray.push(insert);
+      if (deleteArray.length) promiseArray.push(del);
 
-    if (updateArray.length > 0)
-      update = this.dbInstance!.from("vallorent_progress")
-        .upsert([...updateArray])
-        .select();
-    if (insertArray.length > 0)
-      insert = this.dbInstance!.from("vallorent_progress")
-        .insert([...insertArray])
-        .select();
-    if (deleteArray.length > 0)
-      del = this.dbInstance!.from("vallorent_progress")
-        .delete()
-        .in("id", deleteArray);
+      const resp: any = await Promise.all(promiseArray);
 
-    const promiseArray = [];
+      const updatedProgress: Array<any> = [];
+      resp.forEach((res: any, i: number) => {
+        if (res.error) {
+          console.error("Error in database operation:", res.error);
+          this.throwError(res.error);
+        }
+        if (i != 2) updatedProgress.push(res.data);
+      });
 
-    if (updateArray.length) promiseArray.push(update);
-    if (insertArray.length) promiseArray.push(insert);
-    if (deleteArray.length) promiseArray.push(del);
-
-    const resp: any = await Promise.all(promiseArray);
-
-    const updatedProgress: Array<any> = [];
-    resp.forEach((res: any, i: number) => {
-      if (res.error) this.throwError(res.error);
-      if (i != 2) updatedProgress.push(res.data);
-    });
-    return updatedProgress;
+      console.log("Final updated progress:", updatedProgress);
+      return updatedProgress;
+    } catch (error) {
+      console.error("Error in upsertProgress:", error);
+      throw error;
+    }
   }
 
   async deleteChallenge(challengeId: string) {

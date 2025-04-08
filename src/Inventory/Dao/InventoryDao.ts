@@ -3,6 +3,41 @@ import { GetAllCoinEarnedType } from "../Types/types";
 import { GetAllCoinsSpendType } from "../Types/types";
 import { PurchaseHistoryType } from "../Types/types";
 
+interface ChallengeCompletion {
+  id: string;
+  createdAt: string;
+  challengeId: string;
+  game_challenges: {
+    id: string;
+    name: string;
+    reward: number;
+    Game: {
+      gameName: string;
+      gameImage: string;
+    }[];
+  }[];
+}
+
+interface DailyReward {
+  id: string;
+  createdAt: string;
+  amount: number;
+}
+
+interface Purchase {
+  id: string;
+  createdAt: string;
+  amount: number;
+  Item: {
+    itemName: string;
+    itemType: string;
+    itemValue: string | null;
+    itemImage: string | null;
+    gameId: number;
+    extraDetails: any | null;
+  }[];
+}
+
 interface DaoType {
   getCoinsEarned: (userId: string) => Promise<GetAllCoinEarnedType>;
   getCoinsSpend: (userId: string) => Promise<GetAllCoinsSpendType>;
@@ -46,7 +81,7 @@ class InventoryDao extends Dao implements DaoType {
     this.logMethodCall("getPurchaseHistory", { userId });
     const { data, error } = await this.dbInstance!.from(`UserPurchases`)
       .select(
-        `id , createdAt ,amount , Item(itemName ,itemImage , itemType , Game(gameName))`
+        `id, createdAt, amount, Item(itemName, itemType, itemValue, itemImage, gameId, extraDetails)`
       )
       .eq(`userId`, userId);
     if (error) this.throwError(error);

@@ -10,6 +10,10 @@ import { editChallenge } from "../Controllers/editChallenge";
 import { deleteChallenge } from "../Controllers/deleteChallenge";
 import { allOngoingChallenges } from "../Controllers/allOngoingChallenges";
 import { allCompletedChallenges } from "../Controllers/allCompletedChallenges";
+import { endedChallenges } from "../Controllers/endedChallenges";
+import { allEndedChallenges } from "../Controllers/allEndedChallenges";
+import { getMultipleChallengeProgress } from "../Controllers/getMultipleChallengeProgress";
+import { getChallengesGroupedByLevel } from "../Controllers/getChallengesGroupedByLevel";
 
 export const challengesRouter = Router();
 
@@ -35,3 +39,10 @@ challengesRouter.get(
   "/all-completed-challenges/:userId",
   allCompletedChallenges
 );
+challengesRouter.get("/ended-challenges/:gameId", endedChallenges);
+challengesRouter.get("/all-ended-challenges", allEndedChallenges);
+challengesRouter.post(
+  "/multiple-challenge-progress",
+  getMultipleChallengeProgress
+);
+challengesRouter.get("/grouped-by-level", getChallengesGroupedByLevel);

@@ -2,6 +2,7 @@ import { Dao } from "../../utils/Classes/Dao";
 import { UserData } from "../Types/types";
 import { UserProfileDataArray } from "../Types/types";
 import { IsPremiumUserType } from "../Types/types";
+import { transactionDao } from "../../Inventory/Dao/TransactionDao";
 
 interface BasicData {
   userName: string;
@@ -10,6 +11,7 @@ interface BasicData {
   profileName: string;
   globalRanking: number;
   balance: Number;
+  lifetime_earnings: number;
   Auth: string;
   level: number;
   premiumUser: boolean;
@@ -17,6 +19,7 @@ interface BasicData {
 
 interface DaoType {
   getUserBasicInfo: (userId: string) => Promise<UserData>;
+  getUserBasicInfoById: (userId: string) => Promise<UserData>;
   getUserBasicInfoAll: () => Promise<any>;
   updateUserBasicInfo: (userData: BasicData, authId: string) => Promise<any>;
   getUserProfileData: (userId: string) => Promise<UserProfileDataArray>;
@@ -24,6 +27,10 @@ interface DaoType {
   getBalance: (userId: string) => Promise<Balance>;
   createUserProfile: (userData: BasicData) => Promise<any>;
   updateCredit: (userId: string) => Promise<any>;
+  checkAndUpdateDailyReward: (userId: string) => Promise<any>;
+  getLastRewardTimestamp: (userId: string) => Promise<any>;
+  updateBalance: (userId: string, newBalance: number) => Promise<any>;
+  updateUserLevel: (userId: string, lifetimeEarnings: number) => Promise<any>;
 }
 
 export type Balance =
@@ -47,6 +54,20 @@ class UserDoa extends Dao implements DaoType {
 
     if (error) this.throwError(error);
     this.logMethodResult("getUserBasicInfo", data);
+    return data;
+  };
+
+  getUserBasicInfoById: (userId: string) => Promise<UserData> = async (
+    userId
+  ) => {
+    this.logMethodCall("getUserBasicInfoById", { userId });
+    const { data, error } = await this.dbInstance!.from("User")
+      .select()
+      .eq("id", userId)
+      .single();
+
+    if (error) this.throwError(error);
+    this.logMethodResult("getUserBasicInfoById", data);
     return data;
   };
 
@@ -151,13 +172,160 @@ class UserDoa extends Dao implements DaoType {
 
   updateCredit: (userId: string) => Promise<any> = async (userId: string) => {
     this.logMethodCall("updateCredit", { userId });
+    const { data: userData, error: fetchError } = await this.dbInstance!.from(
+      "User"
+    )
+      .select("balance, lifetime_earnings")
+      .eq("id", userId)
+      .single();
+
+    if (fetchError) this.throwError(fetchError);
+    if (!userData) this.throwError("User not found");
+
+    const CREDIT_AMOUNT = 10;
     const { data, error } = await this.dbInstance!.from("User")
-      .update({ balance: 10 })
-      .eq("userId", userId);
+      .update({
+        balance:
+          (userData as NonNullable<typeof userData>).balance + CREDIT_AMOUNT,
+        lifetime_earnings:
+          (userData as NonNullable<typeof userData>).lifetime_earnings +
+          CREDIT_AMOUNT,
+        level:
+          Math.floor(
+            ((userData as NonNullable<typeof userData>).lifetime_earnings +
+              CREDIT_AMOUNT) /
+              600
+          ) + 1,
+      })
+      .eq("id", userId)
+      .select();
     if (error) this.throwError(error);
     this.logMethodResult("updateCredit", data);
     return data;
   };
+
+  checkAndUpdateDailyReward: (userId: string) => Promise<any> = async (
+    userId: string
+  ) => {
+    this.logMethodCall("checkAndUpdateDailyReward", { userId });
+
+    // First get the user's current data
+    const { data: userData, error: fetchError } = await this.dbInstance!.from(
+      "User"
+    )
+      .select(
+        "last_reward_collected, balance, lifetime_earnings, current_streak"
+      )
+      .eq("id", userId)
+      .single();
+
+    if (fetchError) this.throwError(fetchError);
+    if (!userData) return null;
+
+    const now = new Date();
+    const lastRewardDate = userData.last_reward_collected
+      ? new Date(userData.last_reward_collected)
+      : null;
+
+    // Helper function to check if two dates are the same calendar day
+    const isSameDay = (date1: Date, date2: Date) => {
+      return (
+        date1.getFullYear() === date2.getFullYear() &&
+        date1.getMonth() === date2.getMonth() &&
+        date1.getDate() === date2.getDate()
+      );
+    };
+
+    // Helper function to check if two dates are consecutive calendar days
+    const isConsecutiveDay = (current: Date, previous: Date) => {
+      const prevDay = new Date(previous);
+      prevDay.setDate(prevDay.getDate() + 1);
+      return isSameDay(current, prevDay);
+    };
+
+    // If last reward was collected today, return null
+    if (lastRewardDate && isSameDay(now, lastRewardDate)) {
+      this.logMethodResult("checkAndUpdateDailyReward", null);
+      return null;
+    }
+
+    // Calculate new streak
+    const newStreak = lastRewardDate
+      ? isConsecutiveDay(now, lastRewardDate)
+        ? (userData.current_streak || 0) + 1
+        : 1
+      : 1;
+
+    const DAILY_REWARD = 10;
+
+    // Update balance, lifetime_earnings, last_reward_collected, and current_streak
+    const { data, error } = await this.dbInstance!.from("User")
+      .update({
+        balance: userData.balance + DAILY_REWARD,
+        lifetime_earnings: userData.lifetime_earnings + DAILY_REWARD,
+        last_reward_collected: now.toISOString(),
+        current_streak: newStreak,
+        level:
+          Math.floor((userData.lifetime_earnings + DAILY_REWARD) / 600) + 1,
+      })
+      .eq("id", userId)
+      .select();
+
+    if (error) this.throwError(error);
+
+    // Record the transaction after successful balance update
+    await transactionDao.recordTransaction({
+      userId,
+      amount: DAILY_REWARD,
+      type: "EARN",
+      source: "DAILY_REWARD",
+      sourceId: null,
+    });
+
+    this.logMethodResult("checkAndUpdateDailyReward", data);
+    return data;
+  };
+
+  getLastRewardTimestamp: (userId: string) => Promise<any> = async (
+    userId: string
+  ) => {
+    this.logMethodCall("getLastRewardTimestamp", { userId });
+    const { data, error } = await this.dbInstance!.from("User")
+      .select("last_reward_collected, current_streak")
+      .eq("id", userId)
+      .single();
+
+    if (error) this.throwError(error);
+    this.logMethodResult("getLastRewardTimestamp", data);
+    return data;
+  };
+
+  updateBalance: (userId: string, newBalance: number) => Promise<any> = async (
+    userId: string,
+    newBalance: number
+  ) => {
+    this.logMethodCall("updateBalance", { userId, newBalance });
+    const { data, error } = await this.dbInstance!.from("User")
+      .update({ balance: newBalance })
+      .eq("id", userId)
+      .select();
+    if (error) this.throwError(error);
+    this.logMethodResult("updateBalance", data);
+    return data;
+  };
+
+  updateUserLevel: (userId: string, lifetimeEarnings: number) => Promise<any> =
+    async (userId: string, lifetimeEarnings: number) => {
+      this.logMethodCall("updateUserLevel", { userId, lifetimeEarnings });
+      const newLevel = Math.floor(lifetimeEarnings / 600) + 1;
+      const { data, error } = await this.dbInstance!.from("User")
+        .update({ level: newLevel })
+        .eq("id", userId)
+        .select();
+      if (error) this.throwError(error);
+      this.logMethodResult("updateUserLevel", data);
+      return data;
+    };
 }
 
 export const userDao = new UserDoa();
