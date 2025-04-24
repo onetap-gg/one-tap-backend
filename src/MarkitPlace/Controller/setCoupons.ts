@@ -5,26 +5,34 @@ import { itemDao } from "../Dao/ItemDao";
 export const setCoupon: Controller = async (req, res) => {
   try {
     const coupon = req.body;
-    const numberOfInstances = coupon.number_of_instances || 1; // Default to 1 if not specified
-    console.log(coupon);
+    const numberOfInstances = coupon.number_of_instances || 1;
+    const couponCodes = coupon.coupon_codes || [];
+
+    if (couponCodes.length !== numberOfInstances) {
+      res
+        .status(400)
+        .json({
+          message: "Number of coupon codes must match number of instances",
+        });
+      return;
+    }
 
     // First add to Item table as template
     const itemData = await itemDao.setItem({
       itemName: coupon.coupon_name,
       itemType: "COUPON",
-      itemValue: null,
+      itemValue: couponCodes, // Store array of coupon codes
       extraDetails: JSON.stringify({
         description: coupon.description,
         points_to_redeem: coupon.points_to_redeem,
       }),
-      itemImage: null,
       gameId: coupon.game_id,
     });
 
     // Then add multiple instances to marketplace
     const marketplacePromises = Array(numberOfInstances)
       .fill(null)
-      .map(() =>
+      .map((_, index) =>
         markitDao.setCoupon({
           coupon_name: coupon.coupon_name,
           game_id: coupon.game_id,
@@ -32,13 +40,14 @@ export const setCoupon: Controller = async (req, res) => {
           points_to_redeem: coupon.points_to_redeem,
           item_id: itemData[0].id,
           is_available: true,
+          coupon_code: couponCodes[index], // Add individual coupon code
         })
       );
 
     const marketplaceData = await Promise.all(marketplacePromises);
 
     res.status(200).json({
-      marketplaceData: marketplaceData.flat(), // Flatten because each setCoupon returns an array
+      marketplaceData: marketplaceData.flat(),
       itemData,
     });
   } catch (err: any) {

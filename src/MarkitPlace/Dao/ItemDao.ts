@@ -11,9 +11,8 @@ interface Item {
   id?: number;
   itemName: string;
   itemType: string;
-  itemValue: number | null;
+  itemValue: string[]; // Changed to string[] to store multiple coupon codes
   extraDetails: string;
-  itemImage: string | null;
   gameId: number;
 }
 

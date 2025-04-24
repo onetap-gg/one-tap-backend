@@ -9,6 +9,7 @@ interface Coupon {
   points_to_redeem: number;
   item_id: number;
   is_available: boolean;
+  coupon_code: string;
 }
 
 // For creating new coupons
@@ -19,6 +20,7 @@ interface CreateCoupon {
   points_to_redeem: number;
   item_id: number;
   is_available: boolean;
+  coupon_code: string;
 }
 
 interface IMarkit {
@@ -45,6 +47,7 @@ class MarkitDao extends Dao implements IMarkit {
         item_id,
         points_to_redeem,
         is_available,
+        coupon_code,
         Item (
           itemName,
           itemType,
@@ -69,12 +72,14 @@ class MarkitDao extends Dao implements IMarkit {
           item_id: itemId,
           available_instances: 1,
           marketplace_ids: [coupon.id],
+          coupon_codes: [coupon.coupon_code],
           points_to_redeem: coupon.points_to_redeem,
           ...coupon.Item,
         };
       } else {
         acc[itemId].available_instances += 1;
         acc[itemId].marketplace_ids.push(coupon.id);
+        acc[itemId].coupon_codes.push(coupon.coupon_code);
       }
 
       return acc;
@@ -117,6 +122,7 @@ class MarkitDao extends Dao implements IMarkit {
         points_to_redeem: coupon.points_to_redeem,
         item_id: coupon.item_id,
         is_available: coupon.is_available,
+        coupon_code: coupon.coupon_code,
       })
       .select();
     if (error) this.throwError(error);

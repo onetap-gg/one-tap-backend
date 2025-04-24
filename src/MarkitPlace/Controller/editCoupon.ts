@@ -22,20 +22,28 @@ export const editCoupon: Controller = async (req, res) => {
       return;
     }
 
+    // Keep the original coupon code from the marketplace table
+    const originalCouponCode = existingCoupon[0].coupon_code;
+
     // Update both tables
     const [marketplaceData, itemData] = await Promise.all([
-      markitDao.editCoupon(coupon, id as unknown as number),
+      markitDao.editCoupon(
+        {
+          ...coupon,
+          coupon_code: originalCouponCode, // Preserve the original coupon code
+        },
+        id as unknown as number
+      ),
       itemDao.editItem(
         {
           id: existingCoupon[0].item_id,
           itemName: coupon.coupon_name,
           itemType: "COUPON",
-          itemValue: null,
+          itemValue: existingItem[0].itemValue, // Preserve the array of coupon codes
           extraDetails: JSON.stringify({
             description: coupon.description,
             points_to_redeem: coupon.points_to_redeem,
           }),
-          itemImage: null,
           gameId: coupon.game_id,
         },
         existingCoupon[0].item_id
