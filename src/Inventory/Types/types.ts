@@ -28,7 +28,6 @@ export type PurchaseHistoryType =
         itemName: string;
         itemType: string;
         itemValue: string | null;
-        itemImage: string | null;
         gameId: number;
         extraDetails: any | null;
       }[];

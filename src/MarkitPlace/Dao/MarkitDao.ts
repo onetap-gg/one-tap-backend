@@ -52,7 +52,6 @@ class MarkitDao extends Dao implements IMarkit {
           itemName,
           itemType,
           itemValue,
-          itemImage,
           gameId,
           extraDetails
         )

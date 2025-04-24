@@ -81,7 +81,7 @@ class InventoryDao extends Dao implements DaoType {
     this.logMethodCall("getPurchaseHistory", { userId });
     const { data, error } = await this.dbInstance!.from(`UserPurchases`)
       .select(
-        `id, createdAt, amount, Item(itemName, itemType, itemValue, itemImage, gameId, extraDetails)`
+        `id, createdAt, amount, Item(itemName, itemType, itemValue, gameId, extraDetails)`
       )
       .eq(`userId`, userId);
     if (error) this.throwError(error);
