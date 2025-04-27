@@ -17,8 +17,8 @@ const app = express();
 // Configure CORS with specific options
 const corsOptions = {
   origin: [
+    "overwolf-extension://goaeldihogcjbjkglmmkoklgoflogeoiklpnhhln",
     "http://localhost:3000",
-    "https://your-frontend-domain.onrender.com",
   ], // Add your frontend URLs
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
