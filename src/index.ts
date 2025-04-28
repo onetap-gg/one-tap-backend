@@ -23,11 +23,20 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
+  exposedHeaders: ["set-cookie"],
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use(helmet());
+
+// Configure Helmet with appropriate settings for Overwolf
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  })
+);
+
 app.use(hpp());
 
 app.get("/", async (req: Request, res: Response) => {
