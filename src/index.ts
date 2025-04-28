@@ -14,18 +14,7 @@ import { subscriptionRouter } from "./subscriptions/Router/subscripitonsRouter";
 
 const app = express();
 
-// Configure CORS options
-const corsOptions = {
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  exposedHeaders: ["Access-Control-Allow-Origin"],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-};
-
-// Configure helmet with proper CORS settings
+// Configure helmet with all CORS policies disabled
 const helmetConfig = {
   crossOriginResourcePolicy: false,
   crossOriginOpenerPolicy: false,
@@ -33,14 +22,11 @@ const helmetConfig = {
   contentSecurityPolicy: false,
 };
 
-// Apply security headers first
+// Apply security headers
 app.use(helmet(helmetConfig));
 
-// Handle CORS preflight
-app.options("*", cors(corsOptions));
-
-// Apply CORS for all routes
-app.use(cors(corsOptions));
+// Enable CORS for all routes with all origins
+app.use(cors());
 
 // Rest of middleware
 app.use(express.json());
