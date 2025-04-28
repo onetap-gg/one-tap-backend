@@ -18,7 +18,7 @@ const app = express();
 const corsOptions = {
   origin: [
     "http://localhost:3000",
-    "overwolf-extension://gplnheahpkbflhbodajgaonbnplagapf",
+    "overwolf-extension://goaeldihogcjbjkglmmkoklgoflogeoiklpnhhln",
     "https://onetap-admin.vercel.app",
     "https://onetap-two.vercel.app"
   ],
