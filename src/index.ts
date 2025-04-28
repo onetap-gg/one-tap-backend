@@ -19,6 +19,8 @@ const corsOptions = {
   origin: [
     "http://localhost:3000",
     "overwolf-extension://gplnheahpkbflhbodajgaonbnplagapf",
+    "https://onetap-admin.vercel.app",
+    "https://onetap-two.vercel.app"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
