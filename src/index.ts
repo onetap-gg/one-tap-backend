@@ -28,11 +28,11 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 };
 
-// Apply CORS first, before any other middleware
-app.use(cors(corsOptions));
-
 // Handle preflight requests
 app.options("*", cors(corsOptions));
+
+// Apply CORS first, before any other middleware
+app.use(cors(corsOptions));
 
 // Other middleware after CORS
 app.use(express.json());
