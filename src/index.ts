@@ -14,11 +14,11 @@ import { subscriptionRouter } from "./subscriptions/Router/subscripitonsRouter";
 
 const app = express();
 
-// Configure CORS with specific options - must be first
+// Configure CORS options
 const corsOptions = {
   origin: [
-    "overwolf-extension://goaeldihogcjbjkglmmkoklgoflogeoiklpnhhln",
     "http://localhost:3000",
+    "overwolf-extension://gplnheahpkbflhbodajgaonbnplagapf",
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -28,22 +28,25 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 };
 
-// Handle preflight requests
+// Configure helmet with proper CORS settings
+const helmetConfig = {
+  crossOriginResourcePolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: false,
+};
+
+// Apply security headers first
+app.use(helmet(helmetConfig));
+
+// Handle CORS preflight
 app.options("*", cors(corsOptions));
 
-// Apply CORS first, before any other middleware
+// Apply CORS for all routes
 app.use(cors(corsOptions));
 
-// Other middleware after CORS
+// Rest of middleware
 app.use(express.json());
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-    crossOriginEmbedderPolicy: false,
-    contentSecurityPolicy: false,
-  })
-);
 app.use(hpp());
 
 // Routes
