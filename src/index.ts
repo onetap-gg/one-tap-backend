@@ -14,31 +14,39 @@ import { subscriptionRouter } from "./subscriptions/Router/subscripitonsRouter";
 
 const app = express();
 
-// Configure CORS with specific options
+// Configure CORS with specific options - must be first
 const corsOptions = {
   origin: [
     "overwolf-extension://goaeldihogcjbjkglmmkoklgoflogeoiklpnhhln",
     "http://localhost:3000",
-  ], // Add your frontend URLs
+  ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Access-Control-Allow-Origin"],
   credentials: true,
-  exposedHeaders: ["set-cookie"],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 };
 
+// Apply CORS first, before any other middleware
 app.use(cors(corsOptions));
-app.use(express.json());
 
-// Configure Helmet with appropriate settings for Overwolf
+// Handle preflight requests
+app.options("*", cors(corsOptions));
+
+// Other middleware after CORS
+app.use(express.json());
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: false,
   })
 );
-
 app.use(hpp());
 
+// Routes
 app.get("/", async (req: Request, res: Response) => {
   res.status(200).json("Hi");
 });
@@ -47,9 +55,7 @@ app.use("/user", userRouter);
 app.use("/game", gamesRouter);
 app.use("/inventory", inventoryRouter);
 app.use("/marketplace", markitPlaceRouter);
-
 app.use(OverWolfIdToNativeMapper);
-
 app.use("/leaderboard", leaderBoardRouter);
 app.use("/challenges", challengesRouter);
 app.use("/subscriptions", subscriptionRouter);
