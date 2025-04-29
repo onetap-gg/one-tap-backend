@@ -31,6 +31,8 @@ interface DaoType {
   getLastRewardTimestamp: (userId: string) => Promise<any>;
   updateBalance: (userId: string, newBalance: number) => Promise<any>;
   updateUserLevel: (userId: string, lifetimeEarnings: number) => Promise<any>;
+  suspendUser: (authId: string) => Promise<any>;
+  deleteUser: (authId: string) => Promise<any>;
 }
 
 export type Balance =
@@ -326,6 +328,67 @@ class UserDoa extends Dao implements DaoType {
       this.logMethodResult("updateUserLevel", data);
       return data;
     };
+
+  suspendUser: (authId: string) => Promise<any> = async (authId: string) => {
+    this.logMethodCall("suspendUser", { authId });
+    const { data, error } = await this.dbInstance!.from("User")
+      .update({ suspended: true })
+      .eq("Auth", authId)
+      .select();
+    if (error) this.throwError(error);
+    this.logMethodResult("suspendUser", data);
+    return data;
+  };
+
+  deleteUser: (authId: string) => Promise<any> = async (authId: string) => {
+    this.logMethodCall("deleteUser", { authId });
+    const { data, error } = await this.dbInstance!.from("User")
+      .update({ delete: true })
+      .eq("Auth", authId)
+      .select();
+    if (error) this.throwError(error);
+    this.logMethodResult("deleteUser", data);
+    return data;
+  };
+
+  unsuspendUser: (authId: string) => Promise<any> = async (authId: string) => {
+    this.logMethodCall("unsuspendUser", { authId });
+    const { data, error } = await this.dbInstance!.from("User")
+      .update({ suspended: false })
+      .eq("Auth", authId)
+      .select();
+    if (error) this.throwError(error);
+    this.logMethodResult("unsuspendUser", data);
+    return data;
+  }
+
+  
+
+  checkUserSuspension: (authId: string) => Promise<any> = async (
+    authId: string
+  ) => {
+    this.logMethodCall("checkUserSuspension", { authId });
+    const { data, error } = await this.dbInstance!.from("User")
+      .select("suspended")
+      .eq("Auth", authId)
+      .single();
+    if (error) this.throwError(error);
+    this.logMethodResult("checkUserSuspension", data);
+    return data;
+  };
+
+  checkUserDeletion: (authId: string) => Promise<any> = async (
+    authId: string
+  ) => {
+    this.logMethodCall("checkUserDeletion", { authId });
+    const { data, error } = await this.dbInstance!.from("User")
+      .select("deleted")
+      .eq("Auth", authId)
+      .single();
+    if (error) this.throwError(error);
+    this.logMethodResult("checkUserDeletion", data);
+    return data;
+  };
 }
 
 export const userDao = new UserDoa();
