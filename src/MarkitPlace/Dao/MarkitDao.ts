@@ -39,7 +39,7 @@ class MarkitDao extends Dao implements IMarkit {
   getCoupons: () => Promise<any> = async () => {
     this.logMethodCall("getCoupons");
 
-    // First get all available coupons with their Item details
+    // Get all available coupons with their non-archived Item details
     const { data: coupons, error } = await this.dbInstance!.from("marketplace")
       .select(
         `
@@ -53,11 +53,13 @@ class MarkitDao extends Dao implements IMarkit {
           itemType,
           itemValue,
           gameId,
-          extraDetails
+          extraDetails,
+          archived
         )
       `
       )
-      .eq("is_available", true);
+      .eq("is_available", true)
+      .eq("Item.archived", false);
 
     if (error) this.throwError(error);
     if (!coupons) return [];

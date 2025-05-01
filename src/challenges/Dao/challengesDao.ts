@@ -36,6 +36,8 @@ interface DaoType {
     gameId: string
   ) => Promise<any>;
   getChallengesGroupedByLevel: () => Promise<ChallengesGroupedByLevel>;
+  archiveChallenge: (challengeId: string) => Promise<any>;
+  unarchiveChallenge: (challengeId: string) => Promise<any>;
 }
 
 class ChallengesDao extends Dao implements DaoType {
@@ -282,7 +284,7 @@ class ChallengesDao extends Dao implements DaoType {
     const { data, error } = await this.dbInstance!.from(
       "game_challenges"
     ).select(
-      "id,Game(gameName,id), requirements, startTime ,endTime ,type, name ,reward, level"
+      "id,Game(gameName,id), requirements, startTime ,endTime ,type, name ,reward, level, archived"
     );
     if (error) this.throwError(error);
     this.logMethodResult("getAllChallenges", data);
@@ -398,6 +400,32 @@ class ChallengesDao extends Dao implements DaoType {
       this.logMethodResult("getChallengesGroupedByLevel", groupedChallenges);
       return groupedChallenges;
     };
+
+  archiveChallenge: (challengeId: string) => Promise<any> = async (
+    challengeId
+  ) => {
+    this.logMethodCall("archiveChallenge", { challengeId });
+    const { data, error } = await this.dbInstance!.from("game_challenges")
+      .update({ archived: true })
+      .eq("id", challengeId)
+      .select();
+    if (error) this.throwError(error);
+    this.logMethodResult("archiveChallenge", data);
+    return data;
+  };
+
+  unarchiveChallenge: (challengeId: string) => Promise<any> = async (
+    challengeId
+  ) => {
+    this.logMethodCall("unarchiveChallenge", { challengeId });
+    const { data, error } = await this.dbInstance!.from("game_challenges")
+      .update({ archived: false })
+      .eq("id", challengeId)
+      .select();
+    if (error) this.throwError(error);
+    this.logMethodResult("unarchiveChallenge", data);
+    return data;
+  };
 }
 
 export const challengesDao = new ChallengesDao();

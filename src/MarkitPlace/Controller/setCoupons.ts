@@ -25,6 +25,7 @@ export const setCoupon: Controller = async (req, res) => {
       extraDetails: JSON.stringify({
         description: coupon.description,
         points_to_redeem: coupon.points_to_redeem,
+        number_of_coupons: numberOfInstances
       }),
       gameId: coupon.game_id,
     });

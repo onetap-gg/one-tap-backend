@@ -11,6 +11,7 @@ import { getLastRewardTimestamp } from "../Controllers/getLastRewardTimestamp";
 import { getCoinsSummary } from "../Controllers/getCoinsSummary";
 import { deleteUserController } from "../Controllers/deleteUserController";
 import { suspendUserController } from "../Controllers/suspendUserController";
+import { unsuspendUserController } from "../Controllers/unsuspendUserController";
 
 export const userRouter = Router();
 
@@ -34,6 +35,8 @@ userRouter.post("/daily-access-credit", dailyAccessCredits);
 
 userRouter.post("/coins-summary", getCoinsSummary);
 
-userRouter.get("delete-user/:authId", deleteUserController);
+userRouter.get("/delete-user/:authId", deleteUserController);
 
-userRouter.get("suspend-user/:authId", suspendUserController);
+userRouter.get("/suspend-user/:authId", suspendUserController);
+
+userRouter.get("/unsuspend-user/:authId", unsuspendUserController);

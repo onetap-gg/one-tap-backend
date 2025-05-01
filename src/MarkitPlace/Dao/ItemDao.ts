@@ -5,6 +5,8 @@ interface IItem {
   deleteItem: (itemId: string) => Promise<any>;
   editItem: (item: Item, id: number) => Promise<any>;
   getItemById: (itemId: string) => Promise<any>;
+  archiveItem: (itemId: number) => Promise<any>;
+  unarchiveItem: (itemId: number) => Promise<any>;
 }
 
 interface Item {
@@ -14,6 +16,7 @@ interface Item {
   itemValue: string[]; // Changed to string[] to store multiple coupon codes
   extraDetails: string;
   gameId: number;
+  archived?: boolean;
 }
 
 class ItemDao extends Dao implements IItem {
@@ -63,6 +66,40 @@ class ItemDao extends Dao implements IItem {
     this.logMethodResult("getItemById", data);
     return data;
   };
+
+  getItems: () => Promise<any> = async () => {
+    this.logMethodCall("getCoupons", {});
+    const { data, error } = await this.dbInstance!.from("Item")
+      .select()
+      .eq("itemType", "COUPON");
+    if (error) this.throwError(error);
+    this.logMethodResult("getCoupons", data);
+    return data;
+  };
+
+  archiveItem: (itemId: number) => Promise<any> = async (itemId) => {
+    this.logMethodCall("archiveItem", { itemId });
+    const { data, error } = await this.dbInstance!.from("Item")
+      .update({ archived: true })
+      .eq("id", itemId)
+      .select();
+    if (error) this.throwError(error);
+    this.logMethodResult("archiveItem", data);
+    return data;
+  };
+
+  unarchiveItem: (itemId: number) => Promise<any> = async (itemId) => {
+    this.logMethodCall("unarchiveItem", { itemId });
+    const { data, error } = await this.dbInstance!.from("Item")
+      .update({ archived: false })
+      .eq("id", itemId)
+      .select();
+    if (error) this.throwError(error);
+    this.logMethodResult("unarchiveItem", data);
+    return data;
+  };
+
+  // NOTE: Duplicate logic with getCoupons (used in app marketplace). Could unify later with a shared utility when instance counting needed here too.
 }
 
 export const itemDao = new ItemDao();

@@ -343,7 +343,7 @@ class UserDoa extends Dao implements DaoType {
   deleteUser: (authId: string) => Promise<any> = async (authId: string) => {
     this.logMethodCall("deleteUser", { authId });
     const { data, error } = await this.dbInstance!.from("User")
-      .update({ delete: true })
+      .update({ deleted: true })
       .eq("Auth", authId)
       .select();
     if (error) this.throwError(error);

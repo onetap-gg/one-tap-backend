@@ -14,6 +14,8 @@ import { endedChallenges } from "../Controllers/endedChallenges";
 import { allEndedChallenges } from "../Controllers/allEndedChallenges";
 import { getMultipleChallengeProgress } from "../Controllers/getMultipleChallengeProgress";
 import { getChallengesGroupedByLevel } from "../Controllers/getChallengesGroupedByLevel";
+import { archiveChallenge } from "../Controllers/archiveChallenge";
+import { unarchiveChallenge } from "../Controllers/unarchiveChallenge";
 
 export const challengesRouter = Router();
 
@@ -46,3 +48,5 @@ challengesRouter.post(
   getMultipleChallengeProgress
 );
 challengesRouter.get("/grouped-by-level", getChallengesGroupedByLevel);
+challengesRouter.get("/archive/:challengeId", archiveChallenge);
+challengesRouter.get("/unarchive/:challengeId", unarchiveChallenge);
