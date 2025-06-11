@@ -53,7 +53,7 @@ class ChallengesDao extends Dao implements DaoType {
         "game_challenges_active_insamegame_view"
       )
         .select(
-          "id,Game(gameName,id), requirements , startTime ,endTime ,type, name , reward"
+          "id,Game(gameName,id), requirements , startTime ,endTime ,type, name , reward, level"
         )
         .eq("gameId", gameId);
       if (error) this.throwError(error);
@@ -69,7 +69,7 @@ class ChallengesDao extends Dao implements DaoType {
       "game_challenges_active_not_insamegame_view"
     )
       .select(
-        "id,Game(gameName,id), requirements, startTime ,endTime ,type, name ,reward"
+        "id,Game(gameName,id), requirements, startTime ,endTime ,type, name ,reward, level"
       )
       .eq("gameId", gameId);
     if (error) this.throwError(error);
@@ -103,7 +103,7 @@ class ChallengesDao extends Dao implements DaoType {
       "game_challenges_active_insamegame_view"
     )
       .select(
-        "id, gameId, Game:gameId(gameName, id), requirements, startTime, endTime, type, name, reward"
+        "id, gameId, Game:gameId(gameName, id), requirements, startTime, endTime, type, name, reward, level"
       )
       .eq("gameId", gameId);
 
@@ -144,7 +144,7 @@ class ChallengesDao extends Dao implements DaoType {
       "game_challenges_active_not_insamegame_view"
     )
       .select(
-        "id, gameId, Game:gameId(gameName, id), requirements, startTime, endTime, type, name, reward"
+        "id, gameId, Game:gameId(gameName, id), requirements, startTime, endTime, type, name, reward, level"
       )
       .eq("gameId", gameId);
 
@@ -215,6 +215,7 @@ class ChallengesDao extends Dao implements DaoType {
           userId,
           challengeId,
           gameId,
+          level,
           Game (
             gameName
           ),
