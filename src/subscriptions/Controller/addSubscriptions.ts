@@ -4,8 +4,7 @@ import { SubscriptionDao } from "../Dao/subscriptionsDao";
 
 export const setSubscription: Controller = async (req, res) => {
   try {
-    const subscription = req.body.subscription;
-    console.log(subscription);
+    const subscription = req.body;
     const data = await SubscriptionDao.setSubscription(subscription);
     res.status(200).json(data);
   } catch (err: any) {

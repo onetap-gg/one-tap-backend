@@ -5,10 +5,17 @@ export const profileInfoController: Controller = async (req, res) => {
   const { userId } = req.params;
   try {
     const data = await userDao.getUserProfileData(userId);
-    const coins: number = await userDao.getBalance(userId);
-    const x = coins / 100;
-    const level = Math.pow(x, 0.8);
-    res.status(200).json({ ...data, level });
+    const userInfo = await userDao.getUserBasicInfo(userId);
+    if (!userInfo) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+    const level = Math.floor(userInfo.lifetime_earnings / 600) + 1;
+    res.status(200).json({
+      ...data,
+      level,
+      globalRanking: userInfo.globalRanking,
+    });
   } catch (err: any) {
     console.log(err);
     res.status(500).json("server error");

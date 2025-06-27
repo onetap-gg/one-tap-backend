@@ -1,35 +1,36 @@
-
-export type LeaderBoardDataArray = {
-    id: any;
-    User: {
-        userName: any;
-    }[];
-    gameBalance: any;
-    gameLevel: any;
-    Game: {
-        gameName: any;
-    }[];
-}[] | null
+export type LeaderBoardDataArray =
+  | {
+      id: string;
+      userName: string;
+      lifetime_earnings: number;
+      UserGame: {
+        Game: {
+          gameName: string;
+        }[];
+      }[];
+    }[]
+  | null;
 
 export type LeaderBoardData = {
-    User: {
-        userName: any;
-    };
-    balance: any;
-    gameLevel: any;
-    Game: {
-        gameName: any;
-    }
-}| null
+  User: {
+    userName: string;
+  };
+  lifetime_earnings: number;
+  Game: {
+    gameName: string;
+  };
+} | null;
 
-export type LeaderBoarGameWiseType ={
-    id: any;
-    User: {
-        userName: any;
-    }[];
-    gameBalance: any;
-    gameLevel: any;
-    Game: {
-        gameName: any;
-    }[];
-}[] | null
+export type LeaderBoarGameWiseType =
+  | {
+      id: string;
+      userName: string;
+      lifetime_earnings: number;
+      UserGame: {
+        Game: {
+          gameName: string;
+        }[];
+      }[];
+      rank: number;
+    }[]
+  | null;

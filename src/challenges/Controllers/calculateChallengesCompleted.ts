@@ -6,6 +6,7 @@ import { ChallengesNotInSameGame } from "../Types/types";
 import { DotaUptoDateData } from "../../utils/ChallengeRequirement/GameClass/dotaRequirements";
 import { VallorentUptoDateData } from "../../utils/ChallengeRequirement/GameClass/vallorentRequirements";
 import { FortniteUptoDate } from "../../utils/ChallengeRequirement/GameClass/fortniteRequirements";
+import { transactionDao } from "../../Inventory/Dao/TransactionDao";
 
 type completedChallenge = {
   gameId: string;
@@ -55,54 +56,78 @@ export const calculateChallengesCompleted: Controller = async (req, res) => {
     const userId = req.body.userId;
     const gameId = req.body.gameId;
     const gameData = req.body.gameData;
-    console.log("gameId" ,gameId)
-    console.log( "gameData" , gameData)
+    console.log("gameId", gameId);
+    console.log("gameData", gameData);
 
     const sameGameChallengesPromise =
-      challengesDao.getNonCompletedChallengesInSameGame(gameId ,userId);
+      challengesDao.getNonCompletedChallengesInSameGame(gameId, userId);
     const notSameGameChallengesPromise =
-      challengesDao.getNonCompletedChallengesInSameGame(gameId ,userId);
-    
+      challengesDao.getNonCompletedChallengesNotInSameGame(gameId, userId);
+
     let notCompChallSameGame: ChallengesInSameGame = [];
     let notCompChallNotSameGame: ChallengesNotInSameGame = [];
     try {
+      console.log("Fetching challenges for gameId:", gameId, "userId:", userId);
       const resolvedPromises = await Promise.allSettled([
         sameGameChallengesPromise,
         notSameGameChallengesPromise,
       ]);
-      
-      if(resolvedPromises[0].status === "fulfilled")  notCompChallSameGame = resolvedPromises[0].value;
-      if(resolvedPromises[1].status === "fulfilled")  notCompChallNotSameGame = resolvedPromises[1].value;
-      
-    }catch(err){
-      console.log(err);
+
+      if (resolvedPromises[0].status === "fulfilled") {
+        notCompChallSameGame = resolvedPromises[0].value;
+        console.log("Same game challenges result:", notCompChallSameGame);
+      }
+      if (resolvedPromises[1].status === "fulfilled") {
+        notCompChallNotSameGame = resolvedPromises[1].value;
+        console.log(
+          "Not same game challenges result:",
+          notCompChallNotSameGame
+        );
+      }
+    } catch (err) {
+      console.error("Error fetching challenges:", err);
     }
 
-    if(notCompChallSameGame === null) notCompChallSameGame = [];
-    if(notCompChallNotSameGame === null) notCompChallNotSameGame = [];
-    
-    console.log( "--------------Not completed Challenges ---------------")
-    console.log("not completed same game challenge" ,notCompChallSameGame)
-    console.log("not completed not same game challenge" , notCompChallNotSameGame)
-    console.log("-------------------------------------------------------")
-    
+    if (notCompChallSameGame === null) notCompChallSameGame = [];
+    if (notCompChallNotSameGame === null) notCompChallNotSameGame = [];
+
+    console.log("--------------Not completed Challenges ---------------");
+    console.log("not completed same game challenge", notCompChallSameGame);
+    console.log(
+      "not completed not same game challenge",
+      notCompChallNotSameGame
+    );
+    console.log("-------------------------------------------------------");
+
     let totalReward = 0;
     const completedChallenges: Array<any> = [];
 
     const challengeProvider = requirementFactory.getRequirement(Number(gameId));
     const completedChallengeSameGame: Array<completedChallenge> = [];
+    const updateProgressArray: Array<any> = [];
+    const progressMp = new Map<number, number>();
     // console.log("same_gmae_challenge" ,sameGameChallengesPromise )
     // console.log(notCompChallSameGame , "test")
-    console.log("length not comp chall same game" ,notCompChallSameGame.length)
+    console.log("length not comp chall same game", notCompChallSameGame.length);
     notCompChallSameGame.forEach((challenge) => {
       // console.log("inside the foreach")
       const requirements = challenge.requirements;
       const challengeId = challenge.id;
-      const isComp = challengeProvider?.checkIfReqMeet(gameData, requirements);
-      console.log(isComp, "is comp");
-      if (isComp) {
+      const { isCompleted, percentage } = challengeProvider?.checkIfReqMeet(
+        gameData,
+        requirements
+      ) || { isCompleted: false, percentage: 0 };
+      console.log("isCompleted", isCompleted, "percentage", percentage);
+      if (isCompleted) {
         completedChallengeSameGame.push({ gameId, userId, challengeId });
         totalReward += challenge.reward;
+        // Add progress tracking for completed inSameGame challenges
+        updateProgressArray.push({
+          requirement: gameData,
+          challengeId: challengeId,
+          userId: userId,
+        });
+        progressMp.set(challengeId, percentage);
       }
     });
 
@@ -123,14 +148,17 @@ export const calculateChallengesCompleted: Controller = async (req, res) => {
 
     // console.log("this is it", notCompChallNotSameGame);
 
-    const getDataUptoDateArgs:any = [];
+    const getDataUptoDateArgs: any = [];
     notCompChallNotSameGame.forEach((ch) => {
       const startTime = ch.startTime;
       const endTime = ch.endTime;
-      getDataUptoDateArgs.push({startTime, endTime});
+      getDataUptoDateArgs.push({ startTime, endTime });
     });
 
-    const matchDetails = await challengeProvider!.getDataUptoDate(getDataUptoDateArgs, userId);
+    const matchDetails = await challengeProvider!.getDataUptoDate(
+      getDataUptoDateArgs,
+      userId
+    );
 
     // console.log("MATCH details" , matchDetails);
 
@@ -138,19 +166,16 @@ export const calculateChallengesCompleted: Controller = async (req, res) => {
 
     // console.log("notsamegamechallenge" , notCompChallNotSameGame)
 
-    const updateProgressArray: Array<any> = [];
-    const progressMp = new Map<number, number>();
     notCompChallNotSameGame.forEach((ntComplete, i) => {
       const requirement = ntComplete.requirements;
-      
-      console.log("match details " , matchDetails[i]);
-      //! yeh check karna hai 
+
+      console.log("match details ", matchDetails);
       const total = challengeProvider!.calculateTotal(
-        matchDetails[i],
+        matchDetails,
         requirement
       );
       const totalAny = total as any;
-      console.log("not same game total challenge" , total)
+      console.log("not same game total challenge", total);
       const { isCompleted, percentage } = challengeProvider!.checkIfReqMeet(
         totalAny,
         requirement
@@ -158,6 +183,7 @@ export const calculateChallengesCompleted: Controller = async (req, res) => {
       console.log("iscompleted", isCompleted);
       progressMp.set(ntComplete.id, percentage);
       if (isCompleted) {
+        // Add to completedChallenges with the same structure as inSameGame challenges
         completedChallenges.push({
           gameId,
           challengeId: ntComplete.id,
@@ -167,28 +193,43 @@ export const calculateChallengesCompleted: Controller = async (req, res) => {
         updateProgressArray.push({
           requirement: total,
           challengeId: ntComplete.id,
-          // isCompleted: true,
           userId,
         });
       } else {
         updateProgressArray.push({
           requirement: total,
           challengeId: ntComplete.id,
-          // isCompleted: false,
           userId,
         });
       }
     });
 
-    console.log("progress , completed challenges , total rewards" ,  progress ,completedChallenges , totalReward )
+    console.log(
+      "progress , completed challenges , total rewards",
+      progress,
+      completedChallenges,
+      totalReward
+    );
 
     const result = await challengesDao.updateChallengesCompleted(
       completedChallenges
     );
     let coins = 0;
 
-    if (totalReward > 0)
+    if (totalReward > 0) {
       coins = await challengesDao.updateTotalCoins(userId, totalReward);
+
+      // Record transaction for each completed challenge
+      for (const challenge of completedChallenges) {
+        await transactionDao.recordTransaction({
+          userId,
+          amount: totalReward,
+          type: "EARN",
+          source: "CHALLENGE",
+          sourceId: challenge.challengeId,
+        });
+      }
+    }
 
     const getCompletedChallengePromiseArray: Array<Promise<any>> = [];
 
@@ -222,10 +263,28 @@ export const calculateChallengesCompleted: Controller = async (req, res) => {
       return { ...p, percentage };
     });
 
+    // Ensure notInSameGame challenges have the same structure as inSameGame challenges
+    // This preserves the working structure for inSameGame challenges
+    const processedCompletedChallenges = completedChall.map(
+      (challenge: any) => {
+        // If the challenge is missing required fields that inSameGame challenges have,
+        // add them with default values
+        if (!challenge.Game || !challenge.game_challenges) {
+          return {
+            ...challenge,
+            Game: challenge.Game || [],
+            game_challenges: challenge.game_challenges || { name: "" },
+          };
+        }
+        // Otherwise, return the challenge as is (preserving the working structure)
+        return challenge;
+      }
+    );
+
     res.status(200).json({
       progressWithPercentage,
       balance: coins,
-      challenges: completedChall,
+      challenges: processedCompletedChallenges,
     });
   } catch (err) {
     console.log(err);

@@ -12,14 +12,27 @@ import cors from "cors";
 import { OverWolfIdToNativeMapper } from "./utils/Middleware/OverWolfToNativeIdMapper";
 import { subscriptionRouter } from "./subscriptions/Router/subscripitonsRouter";
 
-const app = express()
-app.use(cors())
+const app = express();
 
+// Configure helmet with all CORS policies disabled
+const helmetConfig = {
+  crossOriginResourcePolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: false,
+};
+
+// Apply security headers
+app.use(helmet(helmetConfig));
+
+// Enable CORS for all routes with all origins
 app.use(cors());
+
+// Rest of middleware
 app.use(express.json());
-app.use(helmet());
 app.use(hpp());
 
+// Routes
 app.get("/", async (req: Request, res: Response) => {
   res.status(200).json("Hi");
 });
@@ -28,9 +41,7 @@ app.use("/user", userRouter);
 app.use("/game", gamesRouter);
 app.use("/inventory", inventoryRouter);
 app.use("/marketplace", markitPlaceRouter);
-
 app.use(OverWolfIdToNativeMapper);
-
 app.use("/leaderboard", leaderBoardRouter);
 app.use("/challenges", challengesRouter);
 app.use("/subscriptions", subscriptionRouter);

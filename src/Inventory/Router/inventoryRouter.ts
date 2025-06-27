@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { allInventoryInfo } from "../Controllers/allInventoryInfo";
-export const inventoryRouter = Router()
+import { getUserInventory } from "../Controllers/getUserInventory";
 
-inventoryRouter.get("/get-all-user-info/:userId" , allInventoryInfo)
+export const inventoryRouter = Router();
 
-inventoryRouter.get("/" ,(req,res)=>{
-    res.status(200).json("ok")
-})
+inventoryRouter.get("/all/:userId", allInventoryInfo);
+
+inventoryRouter.post("/user-inventory", getUserInventory);
+
